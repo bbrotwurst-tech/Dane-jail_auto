@@ -2,36 +2,37 @@ name: Daily Jail Scrape
 
 on:
   schedule:
-    - cron: '0 8 * * *' # Runs every day at 8:00 AM UTC
-  workflow_dispatch:     # Allows you to click a button to run it manually
+    - cron: '0 0 * * *' # Runs at midnight
+  workflow_dispatch:    # Allows you to click "Run workflow" manually
+
+permissions:
+  contents: write
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write    # Required to save the CSV back to your repo
-      
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Install dependencies
         run: |
-          pip install playwright pandas beautifulsoup4 lxml
+          pip install pandas beautifulsoup4 lxml playwright
           playwright install chromium
 
-      - name: Run Scraper
+      - name: Run scraper
         run: python main.py
 
-      - name: Commit and push changes
+      - name: Commit and push CSV
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add dane_jail_full_scrape.csv
-          # Only commit if there is a change
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add *.csv
+          # This command checks if there are changes; if yes, it commits and pushes. 
+          # If no changes, it skips safely.
           git diff --quiet && git diff --staged --quiet || (git commit -m "Update jail data" && git push)

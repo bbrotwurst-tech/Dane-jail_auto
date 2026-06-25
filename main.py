@@ -64,7 +64,7 @@ async def get_detail(page, url):
         print(f"Error on {url}: {e}")
         return None
 
-# ── 3. Roster Scraper (Updated for Last Page Handling) ─────────────────────
+# ── 3. Roster Scraper (Handles last page gracefully) ────────────────────────
 async def get_roster_urls(page):
     await page.goto("https://www.danesheriff.com/Residents", wait_until='networkidle')
     base_url = "https://www.danesheriff.com"
@@ -74,23 +74,20 @@ async def get_roster_urls(page):
         content = await page.content()
         soup = BeautifulSoup(content, 'lxml')
         
-        # Extract links
         for a in soup.find_all('a', href=True):
             if '/Residents/Detail/' in a['href']:
                 all_urls.add(base_url + a['href'])
         
         print(f"Current count: {len(all_urls)} unique inmates found...")
 
-        # Find the "Next" button list item
+        # Find the "Next" button list item and check if it's disabled
         next_li = page.locator("#tblInmates_next")
-        
-        # Check if the list item has the class "disabled"
         class_list = await next_li.get_attribute("class")
+        
         if class_list and "disabled" in class_list:
             print("Reached the last page. Scraping complete!")
             break
         
-        # If not disabled, click the link inside the list item
         next_button = page.locator("#tblInmates_next a")
         await next_button.click()
         await page.wait_for_load_state("networkidle")
@@ -109,7 +106,6 @@ async def main():
 
         results = []
         for i, url in enumerate(all_urls):
-            # Print progress every 10 entries
             if (i+1) % 10 == 0:
                 print(f"[{i+1}/{len(all_urls)}] scraping...")
                 
@@ -120,12 +116,13 @@ async def main():
 
         await browser.close()
 
+        # Generate unique filename with date
+        timestamp = datetime.now().strftime("%Y-%m-%d")
+        filename = f"dane_jail_{timestamp}.csv"
+        
         df = pd.DataFrame(results)
-        df.to_csv("dane_jail_full_scrape.csv", index=False)
-        print("Done! Data saved to dane_jail_full_scrape.csv")
+        df.to_csv(filename, index=False)
+        print(f"Done! Data saved to {filename}")
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-

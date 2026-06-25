@@ -9,8 +9,6 @@ from datetime import datetime
 def classify(charges_str):
     if not charges_str or charges_str.strip() == '': return 'None'
     c = charges_str.upper()
-
-    # Priority: Civil/Hold > Felony > Misdemeanor
     if any(k in c for k in ['PROBATION', 'PAROLE', 'HOLD', 'WRIT', 'EXTRADITION', 'SENTENCED', 'PRETRIAL']):
         return 'Civil'
     if any(k in c for k in ['HOMICIDE', 'SEXUAL ASSAULT', 'ROBBERY', 'METHAMPHETAMINE', 'COCAINE',
@@ -22,35 +20,42 @@ def classify(charges_str):
         return 'Misdemeanor'
     return 'Unknown'
 
-# ── 2. Detail Scraper ───────────────────────────────────────────────────────
+# ── 2. Robust Detail Scraper ────────────────────────────────────────────────
 async def get_detail(page, url):
     try:
         await page.goto(url, wait_until='networkidle', timeout=30000)
         content = await page.content()
-        tables = pd.read_html(io.StringIO(content))
-
+        soup = BeautifulSoup(content, 'lxml')
+        
+        # Initialize defaults
+        booking_date = None
         charges_str = ""
         total_counts = 0
         arrest_agencies = "Unknown"
 
-        if len(tables) > 2:
-            charges_df = tables[2]
-            if 'Offense' in charges_df.columns:
-                offense_list = charges_df['Offense'].astype(str).tolist()
-                charges_str = "; ".join(offense_list)
-                if 'Counts' in charges_df.columns:
-                    total_counts = charges_df['Counts'].sum()
+        # A. Attempt to find Booking Date in ALL tables (Robust Strategy)
+        # Often data is in <td class="label">Booking Date</td><td>Value</td>
+        for td in soup.find_all('td'):
+            if "Booking Date" in td.get_text():
+                # Find the next sibling <td> which should contain the date
+                next_td = td.find_next_sibling('td')
+                if next_td:
+                    booking_date = next_td.get_text(strip=True)
+                    break
 
-        if len(tables) > 1:
-            agency_df = tables[1]
-            if 'Agency' in agency_df.columns:
-                arrest_agencies = "; ".join(agency_df['Agency'].dropna().unique().tolist())
-
-        soup = BeautifulSoup(content, 'lxml')
-        booking_date = None
-        date_label = soup.find(string=lambda t: t and "Booking Date" in t)
-        if date_label:
-            booking_date = date_label.find_parent().get_text(separator=' ').replace('Booking Date', '').strip()
+        # B. Parse Charges and Agencies using Pandas (Standard Strategy)
+        try:
+            tables = pd.read_html(io.StringIO(content))
+            for df in tables:
+                # Search for specific columns
+                if 'Offense' in df.columns:
+                    charges_str = "; ".join(df['Offense'].astype(str).tolist())
+                    if 'Counts' in df.columns:
+                        total_counts = df['Counts'].sum()
+                if 'Agency' in df.columns:
+                    arrest_agencies = "; ".join(df['Agency'].dropna().unique().tolist())
+        except:
+            pass # Tables might not exist
 
         return {
             'url': url,
@@ -64,65 +69,45 @@ async def get_detail(page, url):
         print(f"Error on {url}: {e}")
         return None
 
-# ── 3. Roster Scraper (Handles last page gracefully) ────────────────────────
+# ── 3. Roster Scraper ──────────────────────────────────────────────────────
 async def get_roster_urls(page):
     await page.goto("https://www.danesheriff.com/Residents", wait_until='networkidle')
     base_url = "https://www.danesheriff.com"
     all_urls = set()
-
     while True:
         content = await page.content()
         soup = BeautifulSoup(content, 'lxml')
-        
         for a in soup.find_all('a', href=True):
             if '/Residents/Detail/' in a['href']:
                 all_urls.add(base_url + a['href'])
-        
-        print(f"Current count: {len(all_urls)} unique inmates found...")
-
-        # Find the "Next" button list item and check if it's disabled
         next_li = page.locator("#tblInmates_next")
         class_list = await next_li.get_attribute("class")
-        
         if class_list and "disabled" in class_list:
-            print("Reached the last page. Scraping complete!")
             break
-        
-        next_button = page.locator("#tblInmates_next a")
-        await next_button.click()
+        await page.locator("#tblInmates_next a").click()
         await page.wait_for_load_state("networkidle")
-            
     return list(all_urls)
 
-# ── 4. Main Execution Pipeline ────────────────────────────────────────────
+# ── 4. Main Execution Pipeline ─────────────────────────────────────────────
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
-
-        print("Fetching roster list (this may take a moment)...")
         all_urls = await get_roster_urls(page)
-        print(f"Total inmates found: {len(all_urls)}. Starting detail scrape...")
-
         results = []
         for i, url in enumerate(all_urls):
-            if (i+1) % 10 == 0:
-                print(f"[{i+1}/{len(all_urls)}] scraping...")
-                
             data = await get_detail(page, url)
-            if data:
-                results.append(data)
+            if data: results.append(data)
             await asyncio.sleep(0.5) 
-
         await browser.close()
 
-        # Generate unique filename with date
-        timestamp = datetime.now().strftime("%Y-%m-%d")
-        filename = f"dane_jail_{timestamp}.csv"
-        
         df = pd.DataFrame(results)
-        df.to_csv(filename, index=False)
-        print(f"Done! Data saved to {filename}")
+        
+        # Dual-save logic
+        timestamp = datetime.now().strftime("%Y-%m-%d")
+        df.to_csv(f"dane_jail_{timestamp}.csv", index=False)
+        df.to_csv("dane_jail_full_scrape.csv", index=False)
+        print("Data saved successfully.")
 
 if __name__ == "__main__":
     asyncio.run(main())

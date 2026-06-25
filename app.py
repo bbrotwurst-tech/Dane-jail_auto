@@ -1,34 +1,33 @@
 import streamlit as st
 import pandas as pd
-import glob
-import os
+import plotly.express as px
 
-st.set_page_config(page_title="Jail History Explorer", layout="wide")
-st.title("Dane County Jail: Historical Archive")
+st.set_page_config(layout="wide", page_title="Jail Analytics")
 
-# 1. Find all files that start with 'dane_jail_' and look like a date (YYYY-MM-DD)
-# This ignores the 'dane_jail_full_scrape.csv' file
-files = sorted(glob.glob("dane_jail_20*.csv"), reverse=True)
+# 1. Header and Sidebar
+st.title("📊 Dane County Jail Dashboard")
+st.sidebar.header("Filters")
 
-if not files:
-    st.error("No historical files found!")
-else:
-    # 2. Create a dropdown to select the date
-    selected_file = st.selectbox("Select a date to view:", files)
+# Load data (Assuming you have a function for this)
+df = load_data() 
 
-    # 3. Load the data
-    @st.cache_data
-    def load_data(file_path):
-        return pd.read_csv(file_path)
+# Sidebar Filters
+levels = st.sidebar.multiselect("Charge Level", df['charge_level'].unique())
+if levels:
+    df = df[df['charge_level'].isin(levels)]
 
-    df = load_data(selected_file)
+# 2. Top-level KPIs (The "Eye-Catching" part)
+col1, col2, col3 = st.columns(3)
+col1.metric("Total Inmates", len(df))
+col2.metric("Felony Count", len(df[df['charge_level'] == 'Felony']))
+col3.metric("Avg Counts per Inmate", round(df['total_charge_counts'].mean(), 1))
 
-    st.write(f"Showing data from: **{selected_file}**")
+# 3. Visualization
+st.subheader("Charges by Category")
+chart_data = df['charge_level'].value_counts().reset_index()
+fig = px.bar(chart_data, x='charge_level', y='count', color='charge_level')
+st.plotly_chart(fig, use_container_width=True)
 
-    # 4. Filters and Display
-    level = st.multiselect("Filter by Charge Level", df['charge_level'].unique())
-    if level:
-        df = df[df['charge_level'].isin(level)]
-
+# 4. Data Table
+with st.expander("View Raw Data"):
     st.dataframe(df, use_container_width=True)
-

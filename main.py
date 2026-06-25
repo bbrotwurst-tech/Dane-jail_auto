@@ -22,18 +22,20 @@ def classify(charges_str):
         return 'Misdemeanor'
     return 'Unknown'
 
-# ── 2. Detail Scraper (The logic we just debugged) ─────────────────────────
+# ── 2. Detail Scraper ───────────────────────────────────────────────────────
 async def get_detail(page, url):
     try:
         await page.goto(url, wait_until='networkidle', timeout=30000)
         content = await page.content()
+        
+        # Use StringIO to read html tables safely
         tables = pd.read_html(io.StringIO(content))
 
         charges_str = ""
         total_counts = 0
         arrest_agencies = "Unknown"
 
-        # Table 2 is Offenses
+        # Table 2 is usually Offenses
         if len(tables) > 2:
             charges_df = tables[2]
             if 'Offense' in charges_df.columns:
@@ -42,13 +44,13 @@ async def get_detail(page, url):
                 if 'Counts' in charges_df.columns:
                     total_counts = charges_df['Counts'].sum()
 
-        # Table 1 is Agencies
+        # Table 1 is usually Agencies
         if len(tables) > 1:
             agency_df = tables[1]
             if 'Agency' in agency_df.columns:
                 arrest_agencies = "; ".join(agency_df['Agency'].dropna().unique().tolist())
 
-        # Booking Date
+        # Extract Booking Date
         soup = BeautifulSoup(content, 'lxml')
         booking_date = None
         date_label = soup.find(string=lambda t: t and "Booking Date" in t)
@@ -67,13 +69,12 @@ async def get_detail(page, url):
         print(f"Error on {url}: {e}")
         return None
 
-# ── 3. Roster Scraper (Gets the list of links) ─────────────────────────────
+# ── 3. Roster Scraper ───────────────────────────────────────────────────────
 async def get_roster_urls(page):
     await page.goto("https://www.danesheriff.com/Residents", wait_until='networkidle')
     content = await page.content()
     soup = BeautifulSoup(content, 'lxml')
 
-    # Extract links that contain "/Residents/Detail/"
     base_url = "https://www.danesheriff.com"
     urls = set()
     for a in soup.find_all('a', href=True):
@@ -81,7 +82,7 @@ async def get_roster_urls(page):
             urls.add(base_url + a['href'])
     return list(urls)
 
-# ── 4. Main Execution Pipeline ────────────────────────────────────────────
+# ── 4. Main Execution Pipeline ──────────────────────────────────────────────
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -97,7 +98,7 @@ async def main():
             data = await get_detail(page, url)
             if data:
                 results.append(data)
-            await asyncio.sleep(0.5) # Gentle pacing
+            await asyncio.sleep(0.5) 
 
         await browser.close()
 
@@ -105,9 +106,9 @@ async def main():
         df = pd.DataFrame(results)
         df.to_csv("dane_jail_full_scrape.csv", index=False)
         print("Done! Data saved to dane_jail_full_scrape.csv")
-        display(df)
 
-# Execute the pipeline
+# Standard entry point for GitHub Actions
 if __name__ == "__main__":
     asyncio.run(main())
+
 

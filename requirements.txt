@@ -1,6 +1,6 @@
-playwright
+streamlit
 pandas
+plotly
 beautifulsoup4
 lxml
-html5lib
-
+playwright

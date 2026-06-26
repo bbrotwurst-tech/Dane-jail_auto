@@ -6,8 +6,38 @@ from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 from datetime import datetime
 
-# Import the classification engine from your new file!
+# Import the classification engine from your constants file
 from constants import WI_CHARGE_MAP
+
+# ── Helpers: split charge text from statute citation ──────────────────
+STATUTE_RE = re.compile(r'\s+(\d+\.\d+[A-Za-z]?(?:\([^)]*\))*[A-Za-z0-9]*)\s*$')
+COUNT_SUFFIX_RE = re.compile(r'\s*\(\d+\s*CT\)\s*$')
+
+def split_charge_and_statute(charge):
+    """
+    Splits a raw offense string into (charge_name, statute_code).
+    Strips count suffixes like '(1 CT)' and pulls off a trailing
+    Wisconsin statute citation, e.g. '939.32', '973.055(1)',
+    '346.65(2)(G)2', '961.49(1M)(B)1'.
+    Returns (charge_name, statute_code_or_None).
+    """
+    charge = charge.strip().upper()
+    charge = COUNT_SUFFIX_RE.sub('', charge).strip()
+
+    statute_match = STATUTE_RE.search(charge)
+    statute_code = None
+    if statute_match:
+        statute_code = statute_match.group(1)
+        charge = STATUTE_RE.sub('', charge).strip()
+
+    return charge, statute_code
+
+
+def clean_charge_text(charge):
+    """Backwards-compatible helper: just returns the cleaned charge name."""
+    name, _ = split_charge_and_statute(charge)
+    return name
+
 
 # ── 1. TRANSFORMATION LOGIC (Powered by constants.py) ───────────────
 def classify_charge_list(charges_str):
@@ -16,24 +46,19 @@ def classify_charge_list(charges_str):
     """
     if pd.isna(charges_str) or str(charges_str).strip() == '':
         return 'None'
-    
-    # Split by semicolon and clean whitespace
-    charges = [c.strip().upper() for c in str(charges_str).split(';') if c.strip() != '']
-    
+
+    charges = [c.strip() for c in str(charges_str).split(';') if c.strip() != '']
+
     levels = set()
     for charge in charges:
-        # Regex to strip counts like "(1 CT)" to match keys in constants.py
-        charge_clean = re.sub(r'\s*\(\d+\s*CT\)\s*$', '', charge).strip()
-        
-        # Check map
+        charge_clean = clean_charge_text(charge)
+
         if charge_clean in WI_CHARGE_MAP:
             levels.add(WI_CHARGE_MAP[charge_clean])
         else:
-            # Helpful logging to identify new charges for your constants.py
             print(f"  [DEBUG] Unmapped Charge Found: '{charge_clean}'")
             levels.add('Unknown')
-            
-    # Hierarchy Logic (Felony overrides Misdemeanor, etc.)
+
     if 'Felony' in levels: return 'Felony'
     if 'Misdemeanor' in levels: return 'Misdemeanor'
     if 'Civil' in levels: return 'Civil'
@@ -46,10 +71,10 @@ async def get_detail(page, url):
         await page.goto(url, wait_until='networkidle', timeout=30000)
         content = await page.content()
         soup = BeautifulSoup(content, 'lxml')
-        
-        # Initialize defaults
+
         booking_date = None
         charges_str = ""
+        statute_codes_str = ""
         total_counts = 0
         arrest_agencies = "Unknown"
 
@@ -66,17 +91,31 @@ async def get_detail(page, url):
             tables = pd.read_html(io.StringIO(content))
             for df in tables:
                 if 'Offense' in df.columns:
-                    charges_str = "; ".join(df['Offense'].astype(str).tolist())
+                    # Split each offense into (clean name, statute code).
+                    # The clean name goes into charges_str (used for
+                    # classification + display). The statute code is
+                    # preserved separately in statute_codes_str, in the
+                    # same order, so the two columns stay aligned.
+                    names = []
+                    codes = []
+                    for o in df['Offense'].tolist():
+                        name, code = split_charge_and_statute(str(o))
+                        names.append(name)
+                        codes.append(code if code else "")
+                    charges_str = "; ".join(names)
+                    statute_codes_str = "; ".join(codes)
+
                     if 'Counts' in df.columns:
                         total_counts = df['Counts'].sum()
                 if 'Agency' in df.columns:
                     arrest_agencies = "; ".join(df['Agency'].dropna().unique().tolist())
         except Exception:
-            pass # Tables might not exist
+            pass  # Tables might not exist
 
         return {
             'url': url,
             'charges_str': charges_str,
+            'statute_codes': statute_codes_str,
             'total_charge_counts': total_counts,
             'arrest_agencies': arrest_agencies,
             'booking_date': booking_date
@@ -108,23 +147,22 @@ async def scrape_all_data():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
-        
+
         print("Fetching roster URLs...")
         all_urls = await get_roster_urls(page)
         print(f"Found {len(all_urls)} inmates. Scraping details...")
-        
+
         results = []
         for i, url in enumerate(all_urls):
             data = await get_detail(page, url)
-            if data: 
+            if data:
                 results.append(data)
-            
-            # Progress tracker in the terminal so you know it isn't frozen
+
             if (i + 1) % 50 == 0:
                 print(f"  Scraped {i + 1} of {len(all_urls)}...")
-                
-            await asyncio.sleep(0.5) 
-            
+
+            await asyncio.sleep(0.5)
+
         await browser.close()
         return pd.DataFrame(results)
 
@@ -136,25 +174,22 @@ def run_scraper():
 
 def main():
     print("Starting pipeline...")
-    
-    # 1. Fetch Data
+
     df = run_scraper()
     if df.empty:
         print("No data retrieved.")
         return
-    
-    # 2. Transform: Apply classification
+
     print(f"Classifying {len(df)} records using the charge map...")
     df['charge_level'] = df['charges_str'].apply(classify_charge_list)
-    
-    # 3. Save: Output the clean data
+
     timestamp = datetime.now().strftime("%Y-%m-%d")
     daily_filename = f"dane_jail_{timestamp}.csv"
     full_filename = "dane_jail_full_scrape.csv"
-    
+
     df.to_csv(daily_filename, index=False)
     df.to_csv(full_filename, index=False)
-    
+
     print(f"Pipeline complete! Saved data to {daily_filename} and {full_filename}")
 
 if __name__ == "__main__":

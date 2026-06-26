@@ -5,23 +5,29 @@ import glob
 
 st.set_page_config(page_title="Dane County Jail Roster Dashboard", layout="wide")
 
-# ── 1. LOAD DATA SAFELY ──────────────────────────────────────────────
-@st.cache_data(ttl=600)  # Caches data for 10 minutes to keep app fast
+# ── 1. LOAD DATA SAFELY (STRICT TIMESTAMP PRIORITIZATION) ────────────
+@st.cache_data(ttl=600)  # Caches data for 10 minutes to keep the app fast
 def load_data():
-    # Find the most recent daily CSV file in the directory
-    csv_files = glob.glob("dane_jail_*.csv")
-    if not csv_files:
-        # Fallback to full scrape if daily isn't found
+    # Grab all files starting with dane_jail_
+    all_csvs = glob.glob("dane_jail_*.csv")
+    
+    # Filter: Only keep files that DO NOT contain "full_scrape"
+    # This isolates true daily files like 'dane_jail_2026-06-26.csv'
+    timestamped_files = [f for f in all_csvs if "full_scrape" not in f]
+    
+    if not timestamped_files:
+        # Fallback to the full scrape master file ONLY if no daily files exist
         if os.path.exists("dane_jail_full_scrape.csv"):
-            csv_files = ["dane_jail_full_scrape.csv"]
+            latest_file = "dane_jail_full_scrape.csv"
         else:
-            return pd.DataFrame() # Return empty if no files exist
-
-    latest_file = max(csv_files, key=os.path.getmtime)
+            return pd.DataFrame(), "No files found"
+    else:
+        # Pick the absolute newest timestamped daily file based on disk write time
+        latest_file = max(timestamped_files, key=os.path.getmtime)
     
     df = pd.read_csv(latest_file)
     
-    # Fill NaN values defensively so string operations don't break
+    # Defensive parsing: convert NaNs to clean defaults so string splits don't crash
     df['charges_str'] = df['charges_str'].fillna("")
     df['statute_codes'] = df['statute_codes'].fillna("")
     df['arrest_agencies'] = df['arrest_agencies'].fillna("Unknown Agency")
@@ -37,36 +43,39 @@ if df.empty:
     st.error("No data files found! Please run your scraper first to generate the CSV.")
     st.stop()
 
-# ── 2. HEADER & METRICS ──────────────────────────────────────────────
-st.title("Dane County Jail Roster Analysis")
-st.caption(f"Displaying records from: **{file_source}**")
 
-# Calculate high level metrics
+# ── 2. HEADER & KPI METRICS ──────────────────────────────────────────
+st.title("Dane County Jail Roster Analysis")
+st.caption(f"Active Data Source: `{file_source}`")
+
+# Calculate high-level roster metrics
 total_inmates = len(df)
 felonies = len(df[df['charge_level'] == 'Felony'])
-misdemeanors = len(df[df['charge_level'] == 'Misdemeanor'])
+misdemeanors = len(df[df['charge_level'] == 'Microdemeanor']) or len(df[df['charge_level'] == 'Misdemeanor'])
+civil_holds = len(df[df['charge_level'] == 'Civil'])
 unknowns = len(df[df['charge_level'] == 'Unknown'])
 
-m1, m2, m3, m4 = st.columns(4)
+m1, m2, m3, m4, m5 = st.columns(5)
 m1.metric("Total Inmates", total_inmates)
-m2.metric("Felony Holds", felonies, delta_color="inverse")
+m2.metric("Felony Holds", felonies)
 m3.metric("Misdemeanors", misdemeanors)
-m4.metric("Unmapped/Unknown", unknowns)
+m4.metric("Civil / Traffic", civil_holds)
+m5.metric("Unmapped Charges", unknowns)
 
 st.markdown("---")
 
-# ── 3. SIDEBAR FILTERS ──────────────────────────────────────────────
-st.sidebar.header("Filter & Search Options")
 
-# Search Input
-search_query = st.sidebar.text_input("Search by Charge Description", "").strip().upper()
+# ── 3. SIDEBAR FILTERS & INTERACTION ─────────────────────────────────
+st.sidebar.header("Filter Options")
 
-# Severity Filter
-severity_options = ["All"] + list(df['charge_level'].unique())
+# Text search through charge descriptions
+search_query = st.sidebar.text_input("Search Charge Descriptions", "").strip().upper()
+
+# Severity Dropdown
+severity_options = ["All"] + sorted(list(df['charge_level'].unique()))
 selected_severity = st.sidebar.selectbox("Filter by Severity Level", severity_options)
 
-# Agency Filter
-# Extract all unique individual agencies across the semicolon strings
+# Agency Dropdown (Parses individual agencies out of aggregated semicolon strings)
 unique_agencies = set()
 for agency_str in df['arrest_agencies'].unique():
     for a in agency_str.split(";"):
@@ -75,7 +84,7 @@ for agency_str in df['arrest_agencies'].unique():
 agency_options = ["All"] + sorted(list(unique_agencies))
 selected_agency = st.sidebar.selectbox("Filter by Arresting Agency", agency_options)
 
-# Apply Filter Logic
+# Apply active filtering to the dataframe copy
 filtered_df = df.copy()
 
 if search_query:
@@ -88,16 +97,16 @@ if selected_agency != "All":
     filtered_df = filtered_df[filtered_df['arrest_agencies'].str.contains(selected_agency, na=False)]
 
 
-# ── 4. ROSTER ROSTERS DISPLAY ────────────────────────────────────────
-st.subheader(f"Current Bookings ({len(filtered_df)} matches found)")
+# ── 4. PRIMARY ROSTER OVERVIEW TABLE ─────────────────────────────────
+st.subheader(f"Current Bookings Roster ({len(filtered_df)} Matching Records)")
 
-# Display a clean, aggregated layout table
+# Format layout table for easy user consumption
 display_cols = ['booking_date', 'charge_level', 'total_charge_counts', 'arrest_agencies']
 st.dataframe(
     filtered_df[display_cols].rename(columns={
-        'booking_date': 'Booking Date',
-        'charge_level': 'Severity',
-        'total_charge_counts': 'Total Charges',
+        'booking_date': 'Booking Date / Time',
+        'charge_level': 'Highest Severity',
+        'total_charge_counts': 'Total Charge Counts',
         'arrest_agencies': 'Arresting Agency'
     }),
     use_container_width=True
@@ -105,49 +114,55 @@ st.dataframe(
 
 st.markdown("---")
 
-# ── 5. DEEP DIVE / DETAILS VIEW ──────────────────────────────────────
-st.subheader("Inmate Charge Deep-Dive")
-st.info("Select an inmate below to view their fully aligned rap sheet and statute citations.")
 
-# Select box to pick an inmate via row selection
+# ── 5. ITEMIZATIONS & DEEP DIVE (THE ZIP ALIGNMENT PATTERN) ──────────
+st.subheader("Inmate Profile Deep-Dive")
+st.markdown("Select a specific row record below to untangle and audit their exact charges and statute assignments.")
+
+# Generate distinct selectable dropdown options for every inmate matching the filter
 inmate_options = []
 for idx, row in filtered_df.iterrows():
-    # Show main charge snippet as label
-    primary_charge = row['charges_str'].split(';')[0]
-    inmate_options.append((idx, f"{row['booking_date']} - {primary_charge} ({row['charge_level']})"))
+    primary_charge = row['charges_str'].split(';')[0].strip()
+    label = f"{row['booking_date']} | {primary_charge} ({row['charge_level']})"
+    inmate_options.append((idx, label))
 
 if inmate_options:
     selected_idx = st.selectbox(
-        "Choose an inmate record to inspect:", 
+        "Select an inmate profile to extract:", 
         options=[opt[0] for opt in inmate_options],
         format_func=lambda x: next(opt[1] for opt in inmate_options if opt[0] == x)
     )
     
     inmate_data = filtered_df.loc[selected_idx]
     
-    # Realign charges and statutes safely using Zip logic
+    # Split strings by semicolon. Keep empty statutes intact to guarantee index tracking.
     raw_charges = [c.strip() for c in inmate_data['charges_str'].split(';') if c.strip()]
     raw_statutes = [s.strip() for s in inmate_data['statute_codes'].split(';')]
     
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        st.markdown("#### Itemized Charges & Statutes")
+        st.markdown("#### Aligned Rap Sheet")
         for i, charge in enumerate(raw_charges):
-            # Fallback safely if statutes array is shorter than charges array
-            statute_code = "None Listed"
+            # Guard against potential structural array size mismatches out of the CSV
+            statute_code = "None Listed/Found"
             if i < len(raw_statutes) and raw_statutes[i]:
                 statute_code = raw_statutes[i]
                 
+            # Render visually as distinct structural sections rather than ugly raw text
             st.markdown(f"**{i+1}. {charge}**")
-            st.caption(f"Statute Citation: `{statute_code}`")
+            st.caption(f"Statute Mapping: `{statute_code}`")
+            st.markdown("")
             
     with col2:
-        st.markdown("#### Booking Metadata")
-        st.write(f"**Booking Time:** {inmate_data['booking_date']}")
-        st.write(f"**Primary Severity:** {inmate_data['charge_level']}")
-        st.write(f"**Arresting Agencies:** {inmate_data['arrest_agencies']}")
-        st.write(f"**Total Counts:** {inmate_data['total_charge_counts']}")
-        st.markdown(f"[🔗 View Original Sheriff Record]({inmate_data['url']})")
+        st.markdown("#### Administrative Metadata")
+        st.write(f"**Initial Booking:** {inmate_data['booking_date']}")
+        st.write(f"**Assessed Tier:** {inmate_data['charge_level']}")
+        st.write(f"**Responding Agencies:** {inmate_data['arrest_agencies']}")
+        st.write(f"**Aggregated Counts:** {inmate_data['total_charge_counts']}")
+        
+        st.markdown("---")
+        st.markdown(f"[🔗 Open Original Dane Co. Sheriff Link]({inmate_data['url']})")
 else:
-    st.warning("No records match the active filter selections.")
+    st.warning("No records matched your sidebar filter configurations.")
+

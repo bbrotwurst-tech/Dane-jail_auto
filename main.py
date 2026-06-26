@@ -1,4 +1,4 @@
-import io
+            import io
 import asyncio
 import pandas as pd
 import re
@@ -89,26 +89,35 @@ async def get_detail(page, url):
         # Parse Charges and Agencies using Pandas
         try:
             tables = pd.read_html(io.StringIO(content))
+            
+            # Initialize accumulation lists and variables to prevent overwrite
+            all_names = []
+            all_codes = []
+            accumulated_counts = 0
+            all_agencies = set()
+            
             for df in tables:
                 if 'Offense' in df.columns:
-                    # Split each offense into (clean name, statute code).
-                    # The clean name goes into charges_str (used for
-                    # classification + display). The statute code is
-                    # preserved separately in statute_codes_str, in the
-                    # same order, so the two columns stay aligned.
-                    names = []
-                    codes = []
+                    # Append all offenses found across all tables
                     for o in df['Offense'].tolist():
                         name, code = split_charge_and_statute(str(o))
-                        names.append(name)
-                        codes.append(code if code else "")
-                    charges_str = "; ".join(names)
-                    statute_codes_str = "; ".join(codes)
+                        all_names.append(name)
+                        all_codes.append(code if code else "")
 
                     if 'Counts' in df.columns:
-                        total_counts = df['Counts'].sum()
+                        accumulated_counts += df['Counts'].sum()
+                        
                 if 'Agency' in df.columns:
-                    arrest_agencies = "; ".join(df['Agency'].dropna().unique().tolist())
+                    # Collect all distinct agencies across tables
+                    all_agencies.update(df['Agency'].dropna().unique().tolist())
+            
+            # Combine accumulated records into final strings
+            charges_str = "; ".join(all_names)
+            statute_codes_str = "; ".join(all_codes)
+            total_counts = accumulated_counts
+            if all_agencies:
+                arrest_agencies = "; ".join(list(all_agencies))
+                
         except Exception:
             pass  # Tables might not exist
 

@@ -20,29 +20,27 @@ def extract_date(file_path):
 @st.cache_data(ttl=600)  # Caches for 10 minutes to keep performance fast
 def load_data():
     all_csvs = glob.glob("dane_jail_*.csv")
-    timestamped_files = [f for f in all_csvs if "full_scrape" not in f]
+    timestamped_files = [
+        f for f in all_csvs
+        if "full_scrape" not in f and "2026-06-25" not in f
+    ]
 
     if not timestamped_files:
         if os.path.exists("dane_jail_full_scrape.csv"):
             latest_file = "dane_jail_full_scrape.csv"
         else:
-            return pd.DataFrame(), "No files found", []
+            return pd.DataFrame(), "No files found", [], None
     else:
-        # Sort by the date embedded in the filename, not file mtime.
-        # mtime is unreliable on a fresh GitHub Actions checkout, where
-        # every file can get the same modification timestamp.
         dated_files = [(f, extract_date(f)) for f in timestamped_files]
         dated_files = [(f, d) for f, d in dated_files if d is not None]
         if dated_files:
             dated_files.sort(key=lambda x: x[1])
             latest_file = dated_files[-1][0]
         else:
-            # Fallback: no filenames had parseable dates, use mtime as last resort
             latest_file = max(timestamped_files, key=os.path.getmtime)
 
     df = pd.read_csv(latest_file)
 
-    # Defensive cleanup against empty or missing data values
     df['charges_str'] = df['charges_str'].fillna("")
     if 'statute_codes' in df.columns:
         df['statute_codes'] = df['statute_codes'].fillna("")
@@ -53,27 +51,24 @@ def load_data():
     df['total_charge_counts'] = df['total_charge_counts'].fillna(0).astype(int)
     df['booking_date'] = df['booking_date'].fillna("Unknown Date")
 
-    return df, latest_file, timestamped_files
+    latest_date_str = extract_date(latest_file)
+
+    return df, latest_file, timestamped_files, latest_date_str
 
 
 @st.cache_data(ttl=600)
 def process_historical_trends(timestamped_files):
-    """Loops through all historical daily files to build trend data for the graph"""
     history_records = []
-
     for file_path in timestamped_files:
         try:
             date_str = extract_date(file_path)
             if date_str is None:
-                continue  # skip files we can't date
-
+                continue
             day_df = pd.read_csv(file_path)
-
             total_pop = len(day_df)
             felonies = len(day_df[day_df['charge_level'] == 'Felony']) if 'charge_level' in day_df.columns else 0
             misdemeanors = len(day_df[day_df['charge_level'] == 'Misdemeanor']) if 'charge_level' in day_df.columns else 0
             civil = len(day_df[day_df['charge_level'] == 'Civil']) if 'charge_level' in day_df.columns else 0
-
             history_records.append({
                 "Date": date_str,
                 "Total Population": total_pop,
@@ -82,22 +77,105 @@ def process_historical_trends(timestamped_files):
                 "Civil / Traffic": civil
             })
         except Exception:
-            pass  # Keep moving if a single file is corrupt or empty
-
+            pass
     if history_records:
         trend_df = pd.DataFrame(history_records)
-        # Sort chronologically by the actual date string (YYYY-MM-DD sorts correctly as text)
         trend_df = trend_df.sort_values("Date")
-        # Drop accidental duplicate dates (e.g. two scrapes same day), keep the last
         trend_df = trend_df.drop_duplicates(subset="Date", keep="last")
         return trend_df
     return pd.DataFrame()
 
 
+@st.cache_data(ttl=600)
+def compute_turnover(timestamped_files):
+    dated_files = [(f, extract_date(f)) for f in timestamped_files]
+    dated_files = [(f, d) for f, d in dated_files if d is not None]
+    dated_files.sort(key=lambda x: x[1])
+
+    if len(dated_files) < 2:
+        return pd.DataFrame()
+
+    records = []
+    prev_urls, prev_date = None, None
+
+    for f, date_str in dated_files:
+        try:
+            day_df = pd.read_csv(f)
+            if 'url' not in day_df.columns:
+                continue
+            cur_urls = set(day_df['url'].dropna())
+        except Exception:
+            continue
+
+        if prev_urls is not None:
+            exited = len(prev_urls - cur_urls)
+            booked = len(cur_urls - prev_urls)
+            records.append({
+                "Transition": f"{prev_date} -> {date_str}",
+                "Exited": exited,
+                "Booked": booked,
+            })
+
+        prev_urls, prev_date = cur_urls, date_str
+
+    return pd.DataFrame(records)
+
+
+def parse_charge_list(charges_str):
+    if not charges_str or pd.isna(charges_str):
+        return []
+    parts = [c.strip().upper() for c in str(charges_str).split(';') if c.strip()]
+    return [re.sub(r'\s*\(\d+\s*CT\)\s*$', '', p).strip() for p in parts]
+
+
+def top_charges_table(df, level_filter=None, top_n=15):
+    rows = []
+    for _, row in df.iterrows():
+        if level_filter and row['charge_level'] != level_filter:
+            continue
+        for charge in parse_charge_list(row['charges_str']):
+            if charge:
+                rows.append(charge)
+
+    if not rows:
+        return pd.DataFrame()
+
+    counts = pd.Series(rows).value_counts().head(top_n)
+    out = counts.reset_index()
+    out.columns = ["Charge", "Count"]
+    return out
+
+
+def compute_stay_length(df, as_of_date_str):
+    df = df.copy()
+    df['_booking_dt'] = pd.to_datetime(df['booking_date'], errors='coerce')
+    try:
+        ref_date = pd.Timestamp(as_of_date_str)
+    except Exception:
+        ref_date = pd.Timestamp.now()
+    df['_days_held'] = (ref_date - df['_booking_dt']).dt.days
+    valid = df[(df['_days_held'] >= 0) & (df['_days_held'] <= 3650)]
+    return valid, valid['_days_held']
+
+
+JUDICIAL_GROUPS = {
+    "pretrial": ["pretrial", "prearraignment", "prearr", "presentence"],
+    "sentenced": ["sentenced"],
+    "supervision": ["p/p viol", "e.s. sanct", "probation violation", "parole violation", "extended supervision"],
+    "hold": ["writ", "intransit", "extradition"],
+}
+
+def classify_judicial_status(status):
+    if not status or pd.isna(status):
+        return "Other"
+    s = str(status).lower()
+    for group, keywords in JUDICIAL_GROUPS.items():
+        if any(kw in s for kw in keywords):
+            return group.capitalize()
+    return "Other"
+
+
 def agency_profile_table(df):
-    """Builds a per-agency breakdown of inmate count and charge-level mix.
-    An inmate can list multiple agencies; this counts them under each
-    agency they're associated with (not mutually exclusive)."""
     rows = []
     unique_agencies = set()
     for agency_str in df['arrest_agencies'].unique():
@@ -132,7 +210,7 @@ def agency_profile_table(df):
 
 
 # Execute Data Accumulation
-df, file_source, historical_file_list = load_data()
+df, file_source, historical_file_list, latest_date_str = load_data()
 
 if df.empty:
     st.error("No data files found in the repository workspace. Please run your scraper first.")
@@ -160,7 +238,7 @@ st.markdown("---")
 
 
 # ── 3. VISUAL HISTORICAL TRENDS GRAPH ─────────────────────────────────
-st.subheader("📈 Population Trends Over Time")
+st.subheader("Population Trends Over Time")
 
 trend_df = process_historical_trends(historical_file_list)
 
@@ -177,13 +255,120 @@ if not trend_df.empty and len(trend_df) > 1:
     with st.expander("View raw trend data"):
         st.dataframe(trend_df, use_container_width=True)
 else:
-    st.info("📊 Graph tracking requires at least two distinct daily timestamped files to plot a trend line.")
+    st.info("Graph tracking requires at least two distinct daily timestamped files to plot a trend line.")
+
+turnover_df = compute_turnover(historical_file_list)
+
+if not turnover_df.empty:
+    st.markdown("##### Daily Turnover")
+    st.caption("Comparing each day's roster to the prior day's roster by detail URL. 'Exited' may include releases, transfers to DOC custody, or transfers to another facility -- the roster alone can't distinguish which.")
+
+    col_t1, col_t2 = st.columns([2, 1])
+    with col_t1:
+        st.bar_chart(turnover_df.set_index("Transition")[["Booked", "Exited"]], use_container_width=True)
+    with col_t2:
+        avg_booked = turnover_df["Booked"].mean()
+        avg_exited = turnover_df["Exited"].mean()
+        st.metric("Avg Daily Bookings", f"{avg_booked:.1f}")
+        st.metric("Avg Daily Exits", f"{avg_exited:.1f}")
 
 st.markdown("---")
 
 
-# ── 4. AGENCY CHARGE PROFILES ─────────────────────────────────────────
-st.subheader("🚔 Agency Charge Profiles")
+# ── 4. LENGTH OF STAY ──────────────────────────────────────────────────
+st.subheader("Length of Stay")
+st.caption(f"Based on booking date vs. snapshot date ({latest_date_str or 'unknown'}). Excludes records with missing or unparseable booking dates.")
+
+stay_df, days_held_series = compute_stay_length(df, latest_date_str)
+
+if not days_held_series.empty:
+    s1, s2, s3, s4 = st.columns(4)
+    s1.metric("Median Stay", f"{days_held_series.median():.0f}d")
+    s2.metric("Mean Stay", f"{days_held_series.mean():.0f}d")
+    s3.metric("Longest Stay", f"{days_held_series.max():.0f}d")
+    s4.metric("Booked < 7 Days Ago", int((days_held_series < 7).sum()))
+
+    with st.expander("View stay length distribution"):
+        bins = pd.cut(days_held_series, bins=[0, 7, 30, 90, 180, 365, 100000],
+                       labels=["<7d", "7-30d", "30-90d", "90-180d", "180-365d", "1yr+"])
+        bin_counts = bins.value_counts().sort_index()
+        st.bar_chart(bin_counts, use_container_width=True)
+else:
+    st.info("No valid booking dates found to compute length of stay.")
+
+st.markdown("---")
+
+
+# ── 5. TOP CHARGES ─────────────────────────────────────────────────────
+st.subheader("Top Charges")
+st.caption("Note: Felony/Misdemeanor/Civil filters below reflect the INMATE's overall (highest) charge level, not the individual charge's own level. An inmate classified Felony may still have misdemeanor charges counted in the 'Felony' tab if they're also charged with a felony elsewhere on their sheet.")
+
+charge_tab_all, charge_tab_felony, charge_tab_misd, charge_tab_civil = st.tabs(
+    ["All Inmates", "Felony Inmates", "Misdemeanor Inmates", "Civil Inmates"]
+)
+
+with charge_tab_all:
+    t = top_charges_table(df, level_filter=None)
+    if not t.empty:
+        st.bar_chart(t.set_index("Charge")["Count"], use_container_width=True)
+        st.dataframe(t, use_container_width=True, hide_index=True)
+    else:
+        st.info("No charge data available.")
+
+with charge_tab_felony:
+    t = top_charges_table(df, level_filter="Felony")
+    if not t.empty:
+        st.bar_chart(t.set_index("Charge")["Count"], use_container_width=True)
+        st.dataframe(t, use_container_width=True, hide_index=True)
+    else:
+        st.info("No felony-tagged inmates in this snapshot.")
+
+with charge_tab_misd:
+    t = top_charges_table(df, level_filter="Misdemeanor")
+    if not t.empty:
+        st.bar_chart(t.set_index("Charge")["Count"], use_container_width=True)
+        st.dataframe(t, use_container_width=True, hide_index=True)
+    else:
+        st.info("No misdemeanor-tagged inmates in this snapshot.")
+
+with charge_tab_civil:
+    t = top_charges_table(df, level_filter="Civil")
+    if not t.empty:
+        st.bar_chart(t.set_index("Charge")["Count"], use_container_width=True)
+        st.dataframe(t, use_container_width=True, hide_index=True)
+    else:
+        st.info("No civil-tagged inmates in this snapshot.")
+
+st.markdown("---")
+
+
+# ── 6. JUDICIAL STATUS BREAKDOWN ──────────────────────────────────────
+st.subheader("Judicial Status Breakdown")
+
+if 'judicial_status' in df.columns:
+    status_df = df.copy()
+    status_df['status_group'] = status_df['judicial_status'].apply(classify_judicial_status)
+
+    j1, j2 = st.columns([1, 2])
+    with j1:
+        group_counts = status_df['status_group'].value_counts()
+        st.bar_chart(group_counts, use_container_width=True)
+        for group, count in group_counts.items():
+            pct = 100 * count / len(status_df)
+            st.write(f"**{group}**: {count} ({pct:.1f}%)")
+
+    with j2:
+        detail_counts = status_df['judicial_status'].value_counts().reset_index()
+        detail_counts.columns = ["Judicial Status", "Count"]
+        st.dataframe(detail_counts, use_container_width=True, hide_index=True, height=400)
+else:
+    st.info("No `judicial_status` column found in this data source.")
+
+st.markdown("---")
+
+
+# ── 7. AGENCY CHARGE PROFILES ─────────────────────────────────────────
+st.subheader("Agency Charge Profiles")
 st.caption("Breakdown of arresting agencies by how many inmates they're associated with and the severity mix of those inmates' charges. An inmate listing multiple agencies is counted under each.")
 
 agency_df = agency_profile_table(df)
@@ -201,22 +386,21 @@ else:
 st.markdown("---")
 
 
-# ── 5. SIDEBAR FILTERS ───────────────────────────────────────────────
+# ── 8. SIDEBAR FILTERS ───────────────────────────────────────────────
 st.sidebar.header("Filter Options")
 
 search_query = st.sidebar.text_input("Search Charge Descriptions", "").strip().upper()
 severity_options = ["All"] + sorted(list(df['charge_level'].unique()))
 selected_severity = st.sidebar.selectbox("Filter by Severity Level", severity_options)
 
-unique_agencies = set()
+unique_agencies_sidebar = set()
 for agency_str in df['arrest_agencies'].unique():
     for a in str(agency_str).split(";"):
         if a.strip() and a.strip() != "Unknown Agency":
-            unique_agencies.add(a.strip())
-agency_options = ["All"] + sorted(list(unique_agencies))
+            unique_agencies_sidebar.add(a.strip())
+agency_options = ["All"] + sorted(list(unique_agencies_sidebar))
 selected_agency = st.sidebar.selectbox("Filter by Arresting Agency", agency_options)
 
-# Apply active filters
 filtered_df = df.copy()
 
 if search_query:
@@ -229,7 +413,7 @@ if selected_agency != "All":
     filtered_df = filtered_df[filtered_df['arrest_agencies'].str.contains(re.escape(selected_agency), na=False)]
 
 
-# ── 6. MAIN ROSTER TABLE ─────────────────────────────────────────────
+# ── 9. MAIN ROSTER TABLE ─────────────────────────────────────────────
 st.subheader(f"Current Bookings Roster ({len(filtered_df)} Matching Records)")
 
 display_cols = ['booking_date', 'charge_level', 'total_charge_counts', 'arrest_agencies']
@@ -246,7 +430,7 @@ st.dataframe(
 st.markdown("---")
 
 
-# ── 7. DEEP DIVE VIEW (ZIP ALIGNMENT) ────────────────────────────────
+# ── 10. DEEP DIVE VIEW (ZIP ALIGNMENT) ────────────────────────────────
 st.subheader("Inmate Profile Deep-Dive")
 
 inmate_options = []
@@ -291,6 +475,6 @@ if inmate_options:
         st.write(f"**Responding Agencies:** {inmate_data['arrest_agencies']}")
         st.write(f"**Aggregated Counts:** {inmate_data['total_charge_counts']}")
         st.markdown("---")
-        st.markdown(f"[🔗 Open Original Dane Co. Sheriff Link]({inmate_data['url']})")
+        st.markdown(f"[Open Original Dane Co. Sheriff Link]({inmate_data['url']})")
 else:
     st.warning("No records matched your sidebar filter configurations.")

@@ -148,7 +148,14 @@ def top_charges_table(df, level_filter=None, top_n=15):
 
 def compute_stay_length(df, as_of_date_str):
     df = df.copy()
-    df['_booking_dt'] = pd.to_datetime(df['booking_date'], errors='coerce')
+    # Booking dates sometimes come through with no space between the
+    # year and the time, e.g. "5/30/202612:29 AM" instead of
+    # "5/30/2026 12:29 AM". Insert a space before AM/PM clock times so
+    # pd.to_datetime can actually parse them instead of returning NaT.
+    fixed_dates = df['booking_date'].astype(str).str.replace(
+        r'(\d{4})(\d{1,2}:\d{2})', r'\1 \2', regex=True
+    )
+    df['_booking_dt'] = pd.to_datetime(fixed_dates, errors='coerce')
     try:
         ref_date = pd.Timestamp(as_of_date_str)
     except Exception:

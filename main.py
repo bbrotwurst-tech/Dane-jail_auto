@@ -73,29 +73,41 @@ async def get_detail(page, url):
         soup = BeautifulSoup(content, 'lxml')
 
         booking_date = None
+        judicial_status = None
         charges_str = ""
         statute_codes_str = ""
         total_counts = 0
         arrest_agencies = "Unknown"
 
-        # Find Booking Date
+        # Find Booking Date and Status (exact label match to avoid
+        # accidentally matching unrelated cells that merely contain
+        # the word "status" or "date" somewhere in their text)
         for td in soup.find_all('td'):
-            if "Booking Date" in td.get_text():
+            label = td.get_text(strip=True)
+
+            if label == "Booking Date" and booking_date is None:
                 next_td = td.find_next_sibling('td')
                 if next_td:
                     booking_date = next_td.get_text(strip=True)
-                    break
+
+            elif label == "Status" and judicial_status is None:
+                next_td = td.find_next_sibling('td')
+                if next_td:
+                    judicial_status = next_td.get_text(strip=True)
+
+            if booking_date is not None and judicial_status is not None:
+                break
 
         # Parse Charges and Agencies using Pandas
         try:
             tables = pd.read_html(io.StringIO(content))
-            
+
             # Initialize accumulation lists and variables to prevent overwrite
             all_names = []
             all_codes = []
             accumulated_counts = 0
             all_agencies = set()
-            
+
             for df in tables:
                 if 'Offense' in df.columns:
                     # Append all offenses found across all tables
@@ -106,18 +118,18 @@ async def get_detail(page, url):
 
                     if 'Counts' in df.columns:
                         accumulated_counts += df['Counts'].sum()
-                        
+
                 if 'Agency' in df.columns:
                     # Collect all distinct agencies across tables
                     all_agencies.update(df['Agency'].dropna().unique().tolist())
-            
+
             # Combine accumulated records into final strings
             charges_str = "; ".join(all_names)
             statute_codes_str = "; ".join(all_codes)
             total_counts = accumulated_counts
             if all_agencies:
                 arrest_agencies = "; ".join(list(all_agencies))
-                
+
         except Exception:
             pass  # Tables might not exist
 
@@ -127,7 +139,8 @@ async def get_detail(page, url):
             'statute_codes': statute_codes_str,
             'total_charge_counts': total_counts,
             'arrest_agencies': arrest_agencies,
-            'booking_date': booking_date
+            'booking_date': booking_date,
+            'judicial_status': judicial_status,
         }
     except Exception as e:
         print(f"Error on {url}: {e}")
@@ -203,3 +216,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

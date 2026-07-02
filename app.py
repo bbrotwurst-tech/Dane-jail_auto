@@ -4,7 +4,7 @@ import os
 import glob
 import re
 
-st.set_page_config(page_title="Dane County Jail Roster Dashboard", layout="wide")
+st.set_page_config(page_title="Jail IQ | Dane County", layout="wide")
 
 # ── 1. DATA LOADERS (SINGLE FILE & HISTORICAL TRENDS) ─────────────────
 
@@ -230,7 +230,8 @@ if df.empty:
 
 
 # ── 2. HEADER & KPI METRICS ──────────────────────────────────────────
-st.title("Dane County Jail Roster Analysis")
+st.title("Jail IQ")
+st.caption("Dane County Jail Roster Analytics")
 st.caption(f"Active Workspace File: `{file_source}`")
 
 total_inmates = len(df)
@@ -517,3 +518,4 @@ st.caption(
     "Built and maintained independently. "
     f"[☕ Support this project](https://ko-fi.com/{KOFI_USERNAME}) if you find it useful."
 )
+

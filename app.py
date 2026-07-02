@@ -22,6 +22,8 @@ def load_data():
     all_csvs = glob.glob("dane_jail_*.csv")
     timestamped_files = [
         f for f in all_csvs
+        # NOTE: 2026-06-25 excluded -- confirmed bad scrape for that date.
+        # Remove this exclusion once/if a corrected file replaces it.
         if "full_scrape" not in f and "2026-06-25" not in f
     ]
 
@@ -50,6 +52,9 @@ def load_data():
     df['charge_level'] = df['charge_level'].fillna("Unknown")
     df['total_charge_counts'] = df['total_charge_counts'].fillna(0).astype(int)
     df['booking_date'] = df['booking_date'].fillna("Unknown Date")
+    if 'url' not in df.columns:
+        df['url'] = ""
+    df['url'] = df['url'].fillna("")
 
     latest_date_str = extract_date(latest_file)
 
@@ -419,6 +424,21 @@ if selected_severity != "All":
 if selected_agency != "All":
     filtered_df = filtered_df[filtered_df['arrest_agencies'].str.contains(re.escape(selected_agency), na=False)]
 
+# ── Ko-fi support link (sidebar) ──────────────────────────────────────
+KOFI_USERNAME = "bbrotwursttech"
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    f"""
+    <a href="https://ko-fi.com/{KOFI_USERNAME}" target="_blank">
+        <img src="https://storage.ko-fi.com/cdn/kofi5.png?v=3"
+             alt="Support this project on Ko-fi"
+             style="border:0px; height:36px; width: auto; margin-bottom: 6px;">
+    </a>
+    """,
+    unsafe_allow_html=True
+)
+st.sidebar.caption("Free & open project — tips help cover hosting/dev time.")
+
 
 # ── 9. MAIN ROSTER TABLE ─────────────────────────────────────────────
 st.subheader(f"Current Bookings Roster ({len(filtered_df)} Matching Records)")
@@ -482,6 +502,18 @@ if inmate_options:
         st.write(f"**Responding Agencies:** {inmate_data['arrest_agencies']}")
         st.write(f"**Aggregated Counts:** {inmate_data['total_charge_counts']}")
         st.markdown("---")
-        st.markdown(f"[Open Original Dane Co. Sheriff Link]({inmate_data['url']})")
+        # FIX: guard against missing/blank url instead of assuming it's always present
+        inmate_url = inmate_data.get('url', '')
+        if inmate_url and str(inmate_url).strip() and str(inmate_url).lower() != 'nan':
+            st.markdown(f"[Open Original Dane Co. Sheriff Link]({inmate_url})")
+        else:
+            st.caption("No source link available for this record.")
 else:
     st.warning("No records matched your sidebar filter configurations.")
+
+# ── Ko-fi support link (footer) ───────────────────────────────────────
+st.markdown("---")
+st.caption(
+    "Built and maintained independently. "
+    f"[☕ Support this project](https://ko-fi.com/{KOFI_USERNAME}) if you find it useful."
+)

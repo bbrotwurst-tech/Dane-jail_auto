@@ -68,7 +68,17 @@ def classify_charge_list(charges_str):
 # ── 2. SCRAPING LOGIC ────────────────────────────────────────────────
 async def get_detail(page, url):
     try:
-        await page.goto(url, wait_until='networkidle', timeout=30000)
+        response = await page.goto(url, wait_until='networkidle', timeout=30000)
+
+        # If the resident was released/transferred between roster listing
+        # and detail fetch, the detail page may 404 (or otherwise error).
+        # Skip these entirely rather than falling through and writing a
+        # row full of empty/placeholder values.
+        if response is None or not response.ok:
+            status = response.status if response else "no response"
+            print(f"  [SKIP] {url} returned status {status}")
+            return None
+
         content = await page.content()
         soup = BeautifulSoup(content, 'lxml')
 
@@ -216,4 +226,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -306,6 +306,26 @@ if not days_held_series.empty:
                        labels=["<7d", "7-30d", "30-90d", "90-180d", "180-365d", "1yr+"])
         bin_counts = bins.value_counts().sort_index()
         st.bar_chart(bin_counts, use_container_width=True)
+
+    with st.expander("Stay length by charge severity"):
+        severity_stats = []
+        for level in ["Felony", "Misdemeanor", "Civil", "Unknown"]:
+            level_mask = stay_df['charge_level'] == level
+            level_days = stay_df.loc[level_mask, '_days_held']
+            if len(level_days) > 0:
+                severity_stats.append({
+                    "Severity": level,
+                    "Count": len(level_days),
+                    "Median Stay (d)": round(level_days.median()),
+                    "Mean Stay (d)": round(level_days.mean(), 1),
+                    "Longest Stay (d)": int(level_days.max()),
+                })
+        if severity_stats:
+            severity_stay_df = pd.DataFrame(severity_stats)
+            st.dataframe(severity_stay_df, use_container_width=True, hide_index=True)
+            st.bar_chart(severity_stay_df.set_index("Severity")["Median Stay (d)"], use_container_width=True)
+        else:
+            st.info("Not enough data to break down stay length by severity.")
 else:
     st.info("No valid booking dates found to compute length of stay.")
 
@@ -444,15 +464,22 @@ st.sidebar.caption("Free & open project — tips help cover hosting/dev time.")
 # ── 9. MAIN ROSTER TABLE ─────────────────────────────────────────────
 st.subheader(f"Current Bookings Roster ({len(filtered_df)} Matching Records)")
 
-display_cols = ['booking_date', 'charge_level', 'total_charge_counts', 'arrest_agencies']
+display_cols = ['booking_date', 'charge_level', 'total_charge_counts', 'arrest_agencies', 'url']
 st.dataframe(
     filtered_df[display_cols].rename(columns={
         'booking_date': 'Booking Date / Time',
         'charge_level': 'Highest Severity',
         'total_charge_counts': 'Total Charge Counts',
-        'arrest_agencies': 'Arresting Agency'
+        'arrest_agencies': 'Arresting Agency',
+        'url': 'Source'
     }),
-    use_container_width=True
+    use_container_width=True,
+    column_config={
+        "Source": st.column_config.LinkColumn(
+            "Source",
+            display_text="View on danesheriff.com"
+        )
+    }
 )
 
 st.markdown("---")
@@ -518,4 +545,3 @@ st.caption(
     "Built and maintained independently. "
     f"[☕ Support this project](https://ko-fi.com/{KOFI_USERNAME}) if you find it useful."
 )
-

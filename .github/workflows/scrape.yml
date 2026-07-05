@@ -2,7 +2,7 @@ name: Daily Jail Scrape
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Runs at midnight
+    - cron: '0 11 * * *' # Runs at 6am Central (CDT/UTC-5). Note: during CST (winter), this becomes 5am Central — adjust to '0 12 * * *' if you want it to stay fixed at 6am.
   workflow_dispatch:    # Allows you to click "Run workflow" manually
 
 permissions:

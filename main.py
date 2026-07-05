@@ -5,6 +5,7 @@ import re
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # Import the classification engine from your constants file
 from constants import WI_CHARGE_MAP
@@ -215,7 +216,10 @@ def main():
     print(f"Classifying {len(df)} records using the charge map...")
     df['charge_level'] = df['charges_str'].apply(classify_charge_list)
 
-    timestamp = datetime.now().strftime("%Y-%m-%d")
+    # Use Central time explicitly so the date label matches Madison's
+    # local calendar day, regardless of what timezone the machine
+    # running this script (e.g. a GitHub Actions runner in UTC) is in.
+    timestamp = datetime.now(ZoneInfo("America/Chicago")).strftime("%Y-%m-%d")
     daily_filename = f"dane_jail_{timestamp}.csv"
     full_filename = "dane_jail_full_scrape.csv"
 

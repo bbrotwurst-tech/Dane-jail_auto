@@ -78,16 +78,18 @@ def render_columbia_tab():
     st.divider()
 
     # ── Raw searchable table ────────────────────────────────────────
+    # Names intentionally excluded to match Dane County tab's privacy posture.
+    # name_number is kept so repeat bookings of the same person are still
+    # visible without exposing an actual name.
     st.subheader("Full Bookings Log")
-    search = st.text_input("Search by name, charge, or address", "")
+    search = st.text_input("Search by charge or address", "")
     display_df = df[
-        ["inmate_name", "age", "address", "booking_dt", "booking_type", "offenses"]
+        ["name_number", "age", "address", "booking_dt", "booking_type", "offenses"]
     ].sort_values("booking_dt", ascending=False)
 
     if search:
         mask = (
-            display_df["inmate_name"].str.contains(search, case=False, na=False)
-            | display_df["offenses"].str.contains(search, case=False, na=False)
+            display_df["offenses"].str.contains(search, case=False, na=False)
             | display_df["address"].str.contains(search, case=False, na=False)
         )
         display_df = display_df[mask]
@@ -111,4 +113,3 @@ def render_columbia_tab():
 if __name__ == "__main__":
     st.set_page_config(page_title="Columbia County Bookings", layout="wide")
     render_columbia_tab()
-

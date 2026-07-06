@@ -5,7 +5,13 @@ import glob
 import re
 
 st.set_page_config(page_title="Jail IQ | Dane County", layout="wide")
+# ── County selector ────────────────────────────────────────────────
+page = st.sidebar.radio("Select County", ["Dane County", "Columbia County"])
 
+if page == "Columbia County":
+    from columbia_tab import render_columbia_tab
+    render_columbia_tab()
+    st.stop()
 # ── 1. DATA LOADERS (SINGLE FILE & HISTORICAL TRENDS) ─────────────────
 
 DATE_RE = re.compile(r'(\d{4}-\d{2}-\d{2})')

@@ -5,13 +5,30 @@ import glob
 import re
 
 st.set_page_config(page_title="Jail IQ | Dane County", layout="wide")
+
 # ── County selector ────────────────────────────────────────────────
 page = st.sidebar.radio("Select County", ["Dane County", "Columbia County"])
+
+# ── Ko-fi support link (sidebar) — shown on both tabs ─────────────────
+KOFI_USERNAME = "bbrotwursttech"
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    f"""
+    <a href="https://ko-fi.com/{KOFI_USERNAME}" target="_blank">
+        <img src="https://storage.ko-fi.com/cdn/kofi5.png?v=3"
+             alt="Support this project on Ko-fi"
+             style="border:0px; height:36px; width: auto; margin-bottom: 6px;">
+    </a>
+    """,
+    unsafe_allow_html=True
+)
+st.sidebar.caption("Free & open project — tips help cover hosting/dev time.")
 
 if page == "Columbia County":
     from columbia_tab import render_columbia_tab
     render_columbia_tab()
     st.stop()
+
 # ── 1. DATA LOADERS (SINGLE FILE & HISTORICAL TRENDS) ─────────────────
 
 DATE_RE = re.compile(r'(\d{4}-\d{2}-\d{2})')
@@ -451,21 +468,6 @@ if selected_severity != "All":
 if selected_agency != "All":
     filtered_df = filtered_df[filtered_df['arrest_agencies'].str.contains(re.escape(selected_agency), na=False)]
 
-# ── Ko-fi support link (sidebar) ──────────────────────────────────────
-KOFI_USERNAME = "bbrotwursttech"
-st.sidebar.markdown("---")
-st.sidebar.markdown(
-    f"""
-    <a href="https://ko-fi.com/{KOFI_USERNAME}" target="_blank">
-        <img src="https://storage.ko-fi.com/cdn/kofi5.png?v=3"
-             alt="Support this project on Ko-fi"
-             style="border:0px; height:36px; width: auto; margin-bottom: 6px;">
-    </a>
-    """,
-    unsafe_allow_html=True
-)
-st.sidebar.caption("Free & open project — tips help cover hosting/dev time.")
-
 
 # ── 9. MAIN ROSTER TABLE ─────────────────────────────────────────────
 st.subheader(f"Current Bookings Roster ({len(filtered_df)} Matching Records)")
@@ -545,7 +547,7 @@ if inmate_options:
 else:
     st.warning("No records matched your sidebar filter configurations.")
 
-# ── Ko-fi support link (footer) ───────────────────────────────────────
+# ── Footer note ────────────────────────────────────────────────────────
 st.markdown("---")
 st.caption(
     "Built and maintained independently. "

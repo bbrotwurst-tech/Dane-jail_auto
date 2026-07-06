@@ -1,0 +1,55 @@
+name_number,inmate_name,age,address,booking_datetime,booking_type,statutes,offenses,offense_count
+18391,"SMELTZER, SHAWN JACOB",42,"RIO, WI 53960",14:27:14 06/22/26,Violation of Probation / Parole,973.10,Probation/Parole Violation - VOP,1
+392971,"JOHNSON, GLENDA RUTH",32,"MADISON, WI 53704",19:38:00 06/22/26,Arrest,951.02; 951.15,Mistreating Animals - Intentional or Negligent Violation; Animals - Abandonment,2
+96034,"AIKEN, JACOB ROBERT",31,"LODI, WI 53555",23:47:00 06/22/26,"Arrest rpjlbsr.x3 06/29/26 Booking Summary Report, by Date and Time Page 2 of 18",968.075; 947.01(1); 961.573(1),Domestic - Modifier; Disorderly Conduct; Possession of Drug Paraphernalia,3
+393002,"COLLINS, SHARONDA OLIVIA",34,"MADISON, WI 53701",02:02:00 06/23/26,Arrest,346.63(1)(a); 961.573(1),Operating While Intoxicated - OWI; Possession of Drug Paraphernalia,2
+319260,"FISCHER, PIA PAULA",52,"JEFFERSON, WI 53549",14:15:00 06/23/26,Revocation Order and Warrant,973.10,Probation/Parole Violation - VOP,1
+386116,"RATLIFF, LAWRENCE CURTIS",35,"KENOSHA, WI 53140",15:24:50 06/23/26,"Writ from DOC / Other County rpjlbsr.x3 06/29/26 Booking Summary Report, by Date and Time Page 3 of 18",782.00,Writ,1
+6527,"HEITKE, MICHAEL JAMES",44,"PORTAGE, WI 53901",18:16:00 06/23/26,Arrest,946.49(1)(a); 941.23(2); 343.44(1)(a); 341.04(1); 344.62(2); TR305.34(3); TR305.15(2); 961.41(3g)(e),"Misdemeanor Bail Jumping; Carrying a Concealed Weapon; Operate Motor Vehicle While Suspended- OAS - All Offenses; Non-Registration of Auto or Other Vehicle < 10,000 lbs; Operate Motor Vehicle Without Proof of Insurance; Cracked Or Damaged Vehicle Windshield; Failure To Properly Maintain Stop Lamps; Possession of THC (Tetrahydrocannabinols)",8
+308569,"HUEHNE, AARON MICHAEL",43,"COLUMBUS, WI 53925",19:00:00 06/23/26,Serving Sentence,961.41(1m)(h)5,Possession with Intent to Deliver THC (Tetrahydrocannabinols) (>,1
+309679,"WILLIAMS, DAWSON SCOTT",20,"PORTAGE, WI 53901",19:00:00 06/23/26,Serving Sentence,948.07(1),Child Enticement,1
+296811,"CUNNINGHAM, OCTAVEON MARQUIS",19,"COLUMBUS, WI 53925",19:10:00 06/23/26,Arrest,946.49(1)(b),Felony Bail Jumping,1
+393042,"WALTON, CYRIA SHREE",20,"MILWAUKEE, WI 53216",20:10:00 06/23/26,Arrest,961.41(3g)(e); 346.63(1)(a),Possession of THC (Tetrahydrocannabinols); Operating While Intoxicated - OWI,2
+262471,"SWIATCZAK, STEVEN JAMES",47,"OCONOMOWOC, WI 53066",02:56:39 06/24/26,"Arrest rpjlbsr.x3 06/29/26 Booking Summary Report, by Date and Time Page 5 of 18",346.63(1)(a); 946.49(1)(b),Operating While Intoxicated - OWI; Felony Bail Jumping,2
+24929,"SERSTAD, BRENDA LEE",66,"PORTAGE, WI 53901",11:07:10 06/24/26,Arrest,946.49(1)(b); 946.41(1),Felony Bail Jumping; Obstructing or Resisting an Officer,2
+377699,"MARTINEZ, EDWIN NMI",34,"KENOSHA, WI 53143",14:40:00 06/24/26,Arrest Warrant,968.09,Failure to Appear,1
+145835,"JONES, KEYANA",31,"PORTAGE, WI 53901",14:46:41 06/24/26,Arrest,948.40(1); 947.01(1); 946.49(1)(a),Contributing to the Delinquency of a Child; Disorderly Conduct; Misdemeanor Bail Jumping,3
+393085,"DEGENHARDT, WAYLON ROBERT",43,"BOSCOBEL, WI 53805",17:37:00 06/24/26,Out of County Hold,9999.99(99L),Other County Hold,1
+393087,"HENSON, JETT SHAW",21,"QUINTON, OK 74561",19:25:00 06/24/26,Arrest,346.63(1)(a),Operating While Intoxicated - OWI,1
+369718,"BRYANT, THOMAS LEE",44,"BEAVER DAM, WI 53916",19:34:00 06/24/26,Arrest,943.20(1)(b); 779.02(5),Theft - Business Setting; Theft by Contractor,2
+393100,"BRUNET, GRAHAM JOHN",41,"FOND DU LAC, WI 54935",05:05:00 06/25/26,Arrest,346.63(1)(a); 961.41(3g)(e); 961.41(3g)(c); 946.49(1)(b); 961.41(3g)(g); 961.41(3g)(am),Operating While Intoxicated - OWI; Possession of THC (Tetrahydrocannabinols); Possession of Cocaine; Felony Bail Jumping; Possession of Methamphetamine; Possession of Narcotic Drugs,6
+393104,"REYES VASQUEZ, JUAN CARLOS NMI",40,"PUEBLO, CO",06:42:00 06/25/26,Arrest Warrant,9999.99(99K),Other County/Jurisdiction Warrant,1
+384985,"FLORES HERNANDEZ, FELIPE",33,"SUN PRAIRIE, WI 53590",09:45:00 06/25/26,Arrest Warrant,9999.99(99K); 343.44(1)(b),Other County/Jurisdiction Warrant; OAR - Operate Motor Vehicle While Revoked,2
+359205,"SANCHEZ LOPEZ, RAYMUNDO",36,"LECENTER, MN 56057",09:50:00 06/25/26,Arrest Warrant,9999.99(99K),Other County/Jurisdiction Warrant,1
+29001,"HUDSON, JANICE DIANNE",40,"PORTAGE, WI 53901",10:03:00 06/25/26,Arrest Warrant,968.09; 343.44(1)(b); 347.413(1),Failure to Appear; OAR - Operate Motor Vehicle While Revoked; Failure to Install Ignition Interlock Device / Tampering / Violate Order,3
+71572,"WILLIAMSON, CATHLEEN MARIE",48,"MADISON, WI 53704",12:00:00 06/25/26,Arrest Warrant,968.09,Failure to Appear,1
+24929,"SERSTAD, BRENDA LEE",66,"PORTAGE, WI 53901",18:00:00 06/25/26,Arrest,946.49(1)(b),Felony Bail Jumping,1
+170446,"CHAPIN, JOSHUA ALLEN",46,"MILWAUKEE, WI 53219",19:00:00 06/25/26,Serving Sentence,346.63(1)(am),Operating with Restricted Controlled Substance in Blood - RCS,1
+7500,"KELLER, ROBERT LEVI",47,"POYNETTE, WI 53955",19:00:00 06/25/26,Serving Sentence,346.63(1)(a),Operating While Intoxicated - OWI,1
+393149,"CMARKO, STJEPAN JR",53,"CHICAGO, IL 60640",20:44:00 06/25/26,"Arrest rpjlbsr.x3 06/29/26 Booking Summary Report, by Date and Time Page 10 of 18",346.63(1)(a); 947.01(1),Operating While Intoxicated - OWI; Disorderly Conduct,2
+172236,"HENDRICKSON, RACHEL MARIE",41,"CAMBRIA, WI 53923",00:01:00 06/26/26,Arrest,968.075; 947.01(1),Domestic - Modifier; Disorderly Conduct,2
+165211,"VANDER WERFF MARSHALL, CHRISTIAN JOHN",33,"COLUMBUS, WI 53925",01:41:00 06/26/26,Arrest,346.04(3); 961.41(3g)(e); 346.63(1)(a); 973.10,Vehicle Operator Flee/Elude Officer; Possession of THC (Tetrahydrocannabinols); Operating While Intoxicated - OWI; Probation/Parole Violation - VOP,4
+156691,"MEIER, JOSHUA VINCENT",40,"BROOKFIELD, WI 53005",10:35:00 06/26/26,"Arrest Warrant rpjlbsr.x3 06/29/26 Booking Summary Report, by Date and Time Page 11 of 18",9999.99(99K),Other County/Jurisdiction Warrant,1
+388325,"ZILIONIS, YEGOR",17,"PLAINFIELD, IL 60585",13:02:01 06/26/26,Arrest,943.10(1m)(a),Burglary-Building or Dwelling,1
+21649,"RAIMER, KELLY KAY",47,"MADISON, WI 53703",15:36:21 06/26/26,Revocation Order and Warrant,973.10,Probation/Parole Violation - VOP,1
+276375,"NIMM, TIFFANY ROSE",40,"JEFFERSON, WI 53549",15:45:04 06/26/26,Arrest Warrant,968.09,Failure to Appear,1
+324148,"SMITH, MALIK KIENTH",28,"SUN PRAIRIE, WI 53590",15:48:01 06/26/26,Arrest Warrant,968.09,Failure to Appear,1
+393188,"COVARRUBIAS, CANDELARIO III",25,"STOUGHTON, WI 53589",17:49:00 06/26/26,Arrest,346.63(1)(am); 961.41(3g)(e); 961.573(1); 9999.99(99K),Operating with Restricted Controlled Substance in Blood - RCS; Possession of THC (Tetrahydrocannabinols); Possession of Drug Paraphernalia; Other County/Jurisdiction Warrant,4
+393195,"COMBS, DWAYNE DAMARK",41,"MILWAUKEE, WI 53216",17:55:00 06/26/26,Arrest,961.41(3g)(e),Possession of THC (Tetrahydrocannabinols),1
+56553,"INNES, ANTHONY EDWARD",37,"PORTAGE, WI 53901",19:00:00 06/26/26,Serving Sentence,946.41(1),Obstructing or Resisting an Officer,1
+309304,"PAJAC, JOSHUA MATTHEW",47,"KRONENWETTER, WI 54455",19:00:00 06/26/26,Serving Sentence,346.63(1)(a),Operating While Intoxicated - OWI,1
+327517,"RINEHART, DESIREE LEANNE",38,"RIPON, WI 54971",19:00:00 06/26/26,Serving Sentence,346.63(1)(am),Operating with Restricted Controlled Substance in Blood - RCS,1
+347442,"GALAN, OSCAR ENRIQUE",51,"AURORA, CO 80012",21:25:00 06/26/26,"Arrest rpjlbsr.x3 06/29/26 Booking Summary Report, by Date and Time Page 14 of 18",346.63(1)(a),Operating While Intoxicated - OWI,1
+250185,"RAMBERT, PATRICK CURTIS MICHAEL JR",31,"PORTAGE, WI 53901",04:25:00 06/27/26,Violation of Probation / Parole,973.10,Probation/Parole Violation - VOP,1
+70105,"CLAUSS, STEPHEN DOUGLAS",58,"PARDEEVILLE, WI 53954",13:43:21 06/27/26,Arrest,943.50(1m)(b); 946.49(1)(b),Retail Theft - Intentionally Take; Felony Bail Jumping,2
+111182,"ROSARIO, GABRIEL LOUIS",37,"REEDSBURG, WI 53959",21:42:00 06/27/26,"Arrest rpjlbsr.x3 06/29/26 Booking Summary Report, by Date and Time Page 15 of 18",346.63(1)(am); 961.41(3g)(e),Operating with Restricted Controlled Substance in Blood - RCS; Possession of THC (Tetrahydrocannabinols),2
+328861,"STUMPF, KELCIE KAY",38,"PORTAGE, WI 53901",02:28:00 06/28/26,Arrest,346.63(1)(a),Operating While Intoxicated - OWI,1
+393301,"REZACH, ADREANNA EMILY",19,"SOUTH MILWAUKEE, WI 53172",03:16:00 06/28/26,Arrest,346.63(1)(a),Operating While Intoxicated - OWI,1
+164351,"SARBACKER, COOPER STEVEN",23,"BARABOO, WI 53913",04:32:00 06/28/26,Arrest,946.49(1)(b); 46-39(2),Felony Bail Jumping; DRUGS-POSSESSION OF DRUG PARAPHERNALIA,2
+181903,"CADENA AGUILA, JOSE URIEL",30,"MADISON, WI 53711",07:56:00 06/28/26,Arrest,343.44(1)(b); 961.41(3g)(e); 961.573(1); 946.49(1)(a),OAR - Operate Motor Vehicle While Revoked; Possession of THC (Tetrahydrocannabinols); Possession of Drug Paraphernalia; Misdemeanor Bail Jumping,4
+174563,"JONES, JORDAN THOMAS",31,"COLUMBUS, WI 53925",14:47:08 06/28/26,Arrest,947.01(1); 943.01(1); 946.49(1)(a),Disorderly Conduct; Criminal Damage to Property; Misdemeanor Bail Jumping,3
+265720,"ATHEY, JAY ALAN",61,"DOYLESTOWN, WI 53928",18:50:00 06/28/26,Arrest,940.60(1); 947.01(1),Battery; Disorderly Conduct,2
+153020,"PFUTZENREUTER, DAVID ADAM",37,"WISCONSIN DELLS, WI 53965",19:00:00 06/28/26,Serving Sentence,346.63(1)(am),Operating with Restricted Controlled Substance in Blood - RCS,1
+13091,"SCHUTZ, CORY THOMAS",51,"POYNETTE, WI 53955",19:57:00 06/28/26,Arrest,940.60(1); 947.01(1); 940.30; 968.075,Battery; Disorderly Conduct; False Imprisonment; Domestic - Modifier,4
+56117,"HALVERSON, BLAKE MELVIN",39,"DOYLESTOWN, WI 53928",21:10:00 06/28/26,Arrest,23.33(4c)(a)1,ATV or UTV - Intoxicated Operation,1
+74198,"HELGESTAD, ANDREW JOHN",39,"PORTAGE, WI 53901",22:31:00 06/28/26,Arrest,947.01(1),Disorderly Conduct,1

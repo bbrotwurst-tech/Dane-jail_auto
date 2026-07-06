@@ -1,5 +1,6 @@
 WI_CHARGE_MAP = {
     # === CIVIL/ADMIN ===
+    "DEPOSITING HUMAN WASTE PRODUCTS": "Civil",
     'P/P VIOLATION (HOLD)': 'Civil',
     'P/P VIOL/OUTSIDE HOLD': 'Civil',
     'CO PRETRIAL': 'Civil',

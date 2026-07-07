@@ -4,6 +4,8 @@ import os
 import glob
 import re
 
+from time_series_analysis import render_time_series_section
+
 st.set_page_config(page_title="Jail IQ | Dane County", layout="wide")
 
 # ── County selector ────────────────────────────────────────────────
@@ -309,6 +311,14 @@ if not turnover_df.empty:
         st.metric("Avg Daily Exits", f"{avg_exited:.1f}")
 
 st.markdown("---")
+
+
+# ── 3.5 TIME SERIES ANALYSIS (rolling avgs, day-of-week, charge mix,
+#         stay-length trend, agency activity over time) ───────────────
+render_time_series_section(
+    trend_df, turnover_df, historical_file_list,
+    extract_date, compute_stay_length
+)
 
 
 # ── 4. LENGTH OF STAY ──────────────────────────────────────────────────

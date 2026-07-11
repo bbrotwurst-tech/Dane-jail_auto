@@ -4,29 +4,30 @@ with the CJC Jail Snapshot demographic data (race, ethnicity, sex, etc.)
 by joining on Namenum, extracted from each resident's detail page URL.
 
 Expects:
-    data/dane_jail_YYYY-MM-DD.csv       (from the Dane scraper)
-    data/jail_snapshot_YYYY-MM-DD.csv   (from the CJC scraper)
+    dane_jail_YYYY-MM-DD.csv            (from the Dane scraper, saved at repo root)
+    data/jail_snapshot_YYYY-MM-DD.csv   (from the CJC scraper, saved in data/)
 
 Falls back to the most recent available file of each type if today's
 exact date isn't found (in case scraper timing drifts across midnight).
 
 Output:
-    data/merged/merged_jail_data_YYYY-MM-DD.csv
+    merged/merged_jail_data_YYYY-MM-DD.csv
 """
 
 import glob
 import os
-import re
 import sys
 from datetime import datetime, timezone
 
 import pandas as pd
 
-DATA_DIR = "data"
-MERGED_DIR = os.path.join(DATA_DIR, "merged")
+MERGED_DIR = "merged"
 
-DANE_PATTERN = os.path.join(DATA_DIR, "dane_jail_*.csv")
-CJC_PATTERN = os.path.join(DATA_DIR, "jail_snapshot_*.csv")
+# Dane scraper saves directly to repo root; date-only pattern excludes dane_jail_full_scrape.csv
+DANE_PATTERN = "dane_jail_????-??-??.csv"
+
+# CJC scraper saves into a data/ subfolder
+CJC_PATTERN = os.path.join("data", "jail_snapshot_????-??-??.csv")
 
 
 def most_recent_file(pattern: str) -> str:
@@ -99,4 +100,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"FAILED: {e}", file=sys.stderr)
         sys.exit(1)
-

@@ -1,4 +1,4 @@
-name: Jail Snapshot Scraper
+name: CJC Jail Snapshot Scraper
 
 on:
   schedule:
@@ -26,7 +26,7 @@ jobs:
           python -m playwright install --with-deps chromium
 
       - name: Run scraper
-        run: python scrape_jail_snapshot.py
+        run: python cjc_jail_snapshot_scraper.py
 
       - name: Commit and push new data
         run: |

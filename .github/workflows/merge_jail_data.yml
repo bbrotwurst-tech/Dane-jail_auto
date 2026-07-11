@@ -30,4 +30,8 @@ jobs:
 
       - name: Commit and push merged data
         run: |
-          git conf
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add merged/
+          git diff --quiet --cached || git commit -m "Merge jail data for $(date -u +%Y-%m-%d)"
+          git push

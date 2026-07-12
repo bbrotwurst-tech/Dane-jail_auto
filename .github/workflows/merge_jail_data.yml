@@ -3,7 +3,7 @@ name: Merge Jail Data
 on:
   schedule:
     # Runs a few hours after the Dane and CJC scrapers, to give them time to finish and push
-    - cron: "0 17 * * *"
+    - cron: "0 9 * * *"
   workflow_dispatch: {}
 
 jobs:

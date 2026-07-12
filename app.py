@@ -85,7 +85,13 @@ def load_data():
 
     return df, latest_file, timestamped_files, latest_date_str
 
+from location_treemap import render_location_treemap
 
+# wherever you load your latest merged data:
+latest_df = pd.read_csv("merged/merged_jail_data_2026-07-12.csv")  # or however you currently load "today's" data
+
+st.subheader("Where residents are housed")
+render_location_treemap(latest_df)
 @st.cache_data(ttl=600)
 def process_historical_trends(timestamped_files):
     history_records = []

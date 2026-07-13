@@ -38,7 +38,7 @@ async def scrape():
         page = await context.new_page()
 
         await page.goto(URL, wait_until="load", timeout=60000)
-        await page.wait_for_timeout(DOWNLOAD_TIMEOUT_MS)
+        await page.wait_for_timeout(5000)
 
         tableau_frame = None
         for f in page.frames:
@@ -72,6 +72,7 @@ async def scrape():
             await tableau_frame.get_by_role("menuitem", name="Data").click()
         data_page = await new_page_info.value
         await data_page.wait_for_timeout(2000)
+        await data_page.screenshot(path="debug_popup_opened.png")
 
         # Switch to Full Data tab and select all fields
         await data_page.click("text=Full Data")
@@ -89,8 +90,9 @@ async def scrape():
         page.on("download", lambda d: downloads.append(d))
         data_page.on("download", lambda d: downloads.append(d))
 
+        await data_page.screenshot(path="debug_before_download.png")
         await data_page.click("text=Download")
-        await page.wait_for_timeout(DOWNLOAD_TIMEOUT_MS)
+        await page.wait_for_timeout(10000)
 
         if not downloads:
             await browser.close()
@@ -110,4 +112,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"FAILED: {e}", file=sys.stderr)
         sys.exit(1)
-

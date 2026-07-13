@@ -84,21 +84,14 @@ async def scrape():
         await data_page.keyboard.press("Escape")
         await data_page.wait_for_timeout(500)
 
-        # The download event can fire on either the original page or the popup,
-        # so listen on both before clicking Download
-        downloads = []
-        page.on("download", lambda d: downloads.append(d))
-        data_page.on("download", lambda d: downloads.append(d))
-
+        # Trigger the download and wait for it directly, tied to the click
+        # that causes it - avoids race conditions from separate .on() listeners
         await data_page.screenshot(path="debug_before_download.png")
-        await data_page.click("text=Download")
-        await page.wait_for_timeout(10000)
+        async with data_page.expect_download(timeout=DOWNLOAD_TIMEOUT_MS) as download_info:
+            await data_page.click("text=Download")
+        download = await download_info.value
 
-        if not downloads:
-            await browser.close()
-            raise RuntimeError("No download was captured")
-
-        await downloads[0].save_as(output_path)
+        await download.save_as(output_path)
         print(f"Saved: {output_path}")
 
         await browser.close()

@@ -68,7 +68,7 @@ async def scrape():
         await tableau_frame.get_by_role("button", name="Download").click()
         await page.wait_for_timeout(1000)
 
-        async with context.expect_page(timeout=8000) as new_page_info:
+        async with context.expect_page(timeout=20000) as new_page_info:
             await tableau_frame.get_by_role("menuitem", name="Data").click()
         data_page = await new_page_info.value
         await data_page.wait_for_timeout(2000)

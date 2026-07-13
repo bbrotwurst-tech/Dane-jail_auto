@@ -38,7 +38,7 @@ async def scrape():
         page = await context.new_page()
 
         await page.goto(URL, wait_until="load", timeout=60000)
-        await page.wait_for_timeout(5000)
+        await page.wait_for_timeout(DOWNLOAD_TIMEOUT_MS)
 
         tableau_frame = None
         for f in page.frames:

@@ -90,7 +90,7 @@ async def scrape():
         data_page.on("download", lambda d: downloads.append(d))
 
         await data_page.click("text=Download")
-        await page.wait_for_timeout(5000)
+        await page.wait_for_timeout(DOWNLOAD_TIMEOUT_MS)
 
         if not downloads:
             await browser.close()

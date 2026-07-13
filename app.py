@@ -5,6 +5,8 @@ import glob
 import re
 
 from time_series_analysis import render_time_series_section
+from location_treemap import render_location_treemap
+from location_trends import render_location_trends
 
 st.set_page_config(page_title="Jail IQ | Dane County", layout="wide")
 
@@ -85,13 +87,20 @@ def load_data():
 
     return df, latest_file, timestamped_files, latest_date_str
 
-from location_treemap import render_location_treemap
 
-# wherever you load your latest merged data:
-latest_df = pd.read_csv("merged/merged_jail_data_2026-07-12.csv")  # or however you currently load "today's" data
+def get_latest_merged_file(merged_dir="merged"):
+    """Finds the most recent merged_jail_data_YYYY-MM-DD.csv file, by date in
+    the filename (not file mtime), so it stays correct regardless of when
+    files were downloaded/committed."""
+    files = glob.glob(os.path.join(merged_dir, "merged_jail_data_*.csv"))
+    dated = [(f, extract_date(f)) for f in files]
+    dated = [(f, d) for f, d in dated if d is not None]
+    if not dated:
+        return None
+    dated.sort(key=lambda x: x[1])
+    return dated[-1][0]
 
-st.subheader("Where residents are housed")
-render_location_treemap(latest_df)
+
 @st.cache_data(ttl=600)
 def process_historical_trends(timestamped_files):
     history_records = []
@@ -315,6 +324,22 @@ if not turnover_df.empty:
         avg_exited = turnover_df["Exited"].mean()
         st.metric("Avg Daily Bookings", f"{avg_booked:.1f}")
         st.metric("Avg Daily Exits", f"{avg_exited:.1f}")
+
+st.markdown("---")
+
+
+# ── 3.6 LOCATION BREAKDOWN (building/unit treemap + trends over time) ──
+st.subheader("Where residents are housed")
+
+latest_merged_path = get_latest_merged_file()
+if latest_merged_path:
+    latest_merged_df = pd.read_csv(latest_merged_path)
+    render_location_treemap(latest_merged_df)
+
+    st.markdown("##### Location trends over time")
+    render_location_trends("merged")
+else:
+    st.info("No merged location data found yet. Run the merge pipeline to populate the `merged/` folder.")
 
 st.markdown("---")
 
@@ -569,3 +594,4 @@ st.caption(
     "Built and maintained independently. "
     f"[☕ Support this project](https://ko-fi.com/{KOFI_USERNAME}) if you find it useful."
 )
+

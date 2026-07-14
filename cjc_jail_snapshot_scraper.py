@@ -63,6 +63,15 @@ async def scrape():
             accept_downloads=True,
         )
 
+        # Force any feature-detection of the File System Access API to fail,
+        # so download UIs fall back to the classic blob-URL + <a download>
+        # method. showSaveFilePicker() needs to render a native OS dialog,
+        # which headless Chromium has no display for - the call just hangs
+        # or silently rejects with no console error, which matches exactly
+        # what we've been seeing (real click, real handler, zero network
+        # activity, zero errors, zero download).
+        await context.add_init_script("delete window.showSaveFilePicker;")
+
         # --- Step 1: load the embed page just to discover the real
         # public.tableau.com URL for this specific view ---
         embed_page = await context.new_page()

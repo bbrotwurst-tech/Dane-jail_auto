@@ -1,4 +1,4 @@
-"""
+        """
 Scrapes the Dane County CJC Jail Snapshot Tableau dashboard for full
 resident-level demographic data (race, ethnicity, sex, age, booking date,
 length of stay, housing location, etc.) and saves it as a date-stamped CSV.
@@ -140,6 +140,23 @@ async def scrape():
 
         download_locator = data_page.get_by_text("Download", exact=True).first
         await download_locator.wait_for(state="visible", timeout=10000)
+
+        # Log every network request/response/failure on data_page after this
+        # point - if Tableau's export needs a server round-trip to generate
+        # the file, we should see it fire here even if no download event
+        # ever does. This is the piece we lost visibility on last run.
+        def log_request(req):
+            print(f"[data_page request] {req.method} {req.url}")
+
+        def log_response(res):
+            print(f"[data_page response] {res.status} {res.url}")
+
+        def log_request_failed(req):
+            print(f"[data_page request FAILED] {req.url} - {req.failure}")
+
+        data_page.on("request", log_request)
+        data_page.on("response", log_response)
+        data_page.on("requestfailed", log_request_failed)
 
         download_holder = {}
         download_event = asyncio.Event()

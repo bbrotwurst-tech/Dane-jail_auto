@@ -84,11 +84,46 @@ async def scrape():
         await data_page.keyboard.press("Escape")
         await data_page.wait_for_timeout(500)
 
-        # Trigger the download and wait for it directly, tied to the click
-        # that causes it - avoids race conditions from separate .on() listeners
+        # --- Step 1: click the top "Download" control ---
+        # On Tableau's Full Data export view, this first click typically opens
+        # a modal/dialog with format options rather than firing the download
+        # itself. We screenshot right after to confirm what actually rendered.
         await data_page.screenshot(path="debug_before_download.png")
+        await data_page.click("text=Download")
+        await data_page.wait_for_timeout(1000)
+        await data_page.screenshot(path="debug_after_download_click.png")
+
+        # --- Step 2: find and click the real confirm/export control ---
+        # Try a few likely selectors for the modal's actual export button,
+        # in order, and use whichever one is present. Adjust/add to this
+        # list once debug_after_download_click.png shows the real label.
+        confirm_selectors = [
+            "button:has-text('Download')",
+            "button:has-text('Export')",
+            "text=Download Full Data",
+            "[role='button']:has-text('Download')",
+        ]
+
+        confirm_locator = None
+        for sel in confirm_selectors:
+            loc = data_page.locator(sel)
+            try:
+                if await loc.count() > 0 and await loc.first.is_visible():
+                    confirm_locator = loc.first
+                    break
+            except Exception:
+                continue
+
+        if confirm_locator is None:
+            await data_page.screenshot(path="debug_no_confirm_button_found.png")
+            await browser.close()
+            raise RuntimeError(
+                "Could not find a confirm/export button in the download modal. "
+                "Check debug_after_download_click.png to identify the correct selector."
+            )
+
         async with data_page.expect_download(timeout=DOWNLOAD_TIMEOUT_MS) as download_info:
-            await data_page.click("text=Download")
+            await confirm_locator.click()
         download = await download_info.value
 
         await download.save_as(output_path)

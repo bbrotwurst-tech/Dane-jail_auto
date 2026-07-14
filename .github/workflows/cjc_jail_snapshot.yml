@@ -33,9 +33,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: debug-screenshots
-          path: |
-            debug_popup_opened.png
-            debug_before_download.png
+          path: debug_*.png
           if-no-files-found: ignore
 
       - name: Commit and push new data

@@ -37,6 +37,12 @@ async def scrape():
         )
         page = await context.new_page()
 
+        # Surface any JS console errors / uncaught exceptions from the page -
+        # if Tableau's download handler throws internally, this is the only
+        # way we'll see it, since it won't show up in screenshots.
+        page.on("console", lambda msg: print(f"[main page console:{msg.type}] {msg.text}") if msg.type == "error" else None)
+        page.on("pageerror", lambda err: print(f"[main page error] {err}"))
+
         await page.goto(URL, wait_until="load", timeout=60000)
         await page.wait_for_timeout(5000)
 
@@ -71,6 +77,8 @@ async def scrape():
         async with context.expect_page(timeout=20000) as new_page_info:
             await tableau_frame.get_by_role("menuitem", name="Data").click()
         data_page = await new_page_info.value
+        data_page.on("console", lambda msg: print(f"[data_page console:{msg.type}] {msg.text}") if msg.type == "error" else None)
+        data_page.on("pageerror", lambda err: print(f"[data_page error] {err}"))
         await data_page.wait_for_timeout(2000)
         await data_page.screenshot(path="debug_popup_opened.png")
 
@@ -115,6 +123,19 @@ async def scrape():
             }"""
         )
         print("DOWNLOAD ELEMENT CHAIN:", element_info)
+
+        button_state = await download_locator.evaluate(
+            """el => {
+                const btn = el.closest('button');
+                if (!btn) return null;
+                return {
+                    disabled: btn.disabled,
+                    ariaDisabled: btn.getAttribute('aria-disabled'),
+                    classes: btn.className,
+                };
+            }"""
+        )
+        print("DOWNLOAD BUTTON STATE:", button_state)
 
         download_holder = {}
         download_event = asyncio.Event()
@@ -172,3 +193,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"FAILED: {e}", file=sys.stderr)
         sys.exit(1)
+        

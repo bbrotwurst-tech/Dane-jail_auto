@@ -64,10 +64,7 @@ async def scrape():
         # Force any feature-detection of the File System Access API to fail,
         # so download UIs fall back to the classic blob-URL + <a download>
         # method. showSaveFilePicker() needs to render a native OS dialog,
-        # which headless Chromium has no display for - the call just hangs
-        # or silently rejects with no console error, which matches exactly
-        # what we've been seeing (real click, real handler, zero network
-        # activity, zero errors, zero download).
+        # which headless Chromium has no display for.
         await context.add_init_script("delete window.showSaveFilePicker;")
 
         # --- Step 1: load the embed page just to discover the real
@@ -95,10 +92,6 @@ async def scrape():
         await page.wait_for_timeout(5000)
         await page.screenshot(path="debug_direct_tableau_load.png")
 
-        # The direct public.tableau.com page may itself still wrap the viz in
-        # an internal iframe, or the viz may now be in the top-level frame.
-        # Handle both: prefer a nested tableau frame if present, else use
-        # the page itself as the interaction target.
         inner_frame = await find_tableau_frame(page)
         tableau_frame = inner_frame if inner_frame is not None else page.main_frame
 
@@ -118,8 +111,7 @@ async def scrape():
             raise RuntimeError(
                 "Could not select the Total Residents mark after retries. "
                 "Check debug_selection_failed.png - click coordinates may "
-                "need recalibrating for the standalone Tableau layout "
-                "(toolbar/padding can differ from the embedded iframe)."
+                "need recalibrating for the standalone Tableau layout."
             )
 
         # Open the Download menu, then the "Data" option (opens a new popup page)
@@ -143,15 +135,18 @@ async def scrape():
         await data_page.keyboard.press("Escape")
         await data_page.wait_for_timeout(500)
 
+        # Rule out a readiness race before attempting the download
+        try:
+            await data_page.wait_for_load_state("networkidle", timeout=8000)
+        except Exception:
+            pass
+        await data_page.wait_for_timeout(3000)
+
         await data_page.screenshot(path="debug_before_download.png")
 
         download_locator = data_page.get_by_text("Download", exact=True).first
         await download_locator.wait_for(state="visible", timeout=10000)
 
-        # Log every network request/response/failure on data_page after this
-        # point - if Tableau's export needs a server round-trip to generate
-        # the file, we should see it fire here even if no download event
-        # ever does. This is the piece we lost visibility on last run.
         def log_request(req):
             print(f"[data_page request] {req.method} {req.url}")
 
@@ -166,10 +161,6 @@ async def scrape():
         data_page.on("requestfailed", log_request_failed)
 
         # Ground truth check: does a click event actually reach the document
-        # at all when we click the Download button? This tells us whether
-        # the issue is upstream (click never dispatches/lands) or downstream
-        # (click lands fine, but whatever handler runs produces no visible
-        # effect).
         await data_page.evaluate(
             """() => {
                 document.addEventListener('click', (e) => {
@@ -191,8 +182,6 @@ async def scrape():
         context.on("page", handle_new_page)
         data_page.on("download", handle_download)
 
-        # Click the ancestor that's actually the clickable control (button/
-        # role=button), not the bare text node.
         clickable = download_locator.locator(
             "xpath=ancestor-or-self::*[self::button or @role='button'][1]"
         )
@@ -234,4 +223,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"FAILED: {e}", file=sys.stderr)
         sys.exit(1)
-

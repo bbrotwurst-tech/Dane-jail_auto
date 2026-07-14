@@ -95,6 +95,27 @@ async def scrape():
         download_locator = data_page.get_by_text("Download", exact=True).first
         await download_locator.wait_for(state="visible", timeout=10000)
 
+        # Ground-truth check: log the actual element and its ancestors so we
+        # can see whether "Download" text resolves to the real interactive
+        # control or just a label/span with no click handler attached.
+        element_info = await download_locator.evaluate(
+            """el => {
+                const chain = [];
+                let node = el;
+                for (let i = 0; i < 4 && node; i++) {
+                    chain.push({
+                        tag: node.tagName,
+                        role: node.getAttribute && node.getAttribute('role'),
+                        classes: node.className,
+                        text: (node.textContent || '').trim().slice(0, 40),
+                    });
+                    node = node.parentElement;
+                }
+                return chain;
+            }"""
+        )
+        print("DOWNLOAD ELEMENT CHAIN:", element_info)
+
         download_holder = {}
         download_event = asyncio.Event()
 
@@ -108,7 +129,14 @@ async def scrape():
         context.on("page", handle_new_page)
         data_page.on("download", handle_download)
 
-        await download_locator.click()
+        # Click the ancestor that's actually the clickable control (button/
+        # role=button), not the bare text node, in case "Download" text is
+        # nested inside the real interactive element.
+        clickable = download_locator.locator(
+            "xpath=ancestor-or-self::*[self::button or @role='button'][1]"
+        )
+        target = clickable if await clickable.count() > 0 else download_locator
+        await target.click()
 
         try:
             await asyncio.wait_for(

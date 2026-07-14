@@ -29,7 +29,7 @@ from playwright.async_api import async_playwright
 
 EMBED_URL = "https://cjc.danecounty.gov/Data-and-Dashboards/Jail-Snapshot"
 OUTPUT_DIR = "data"
-TOTAL_RESIDENTS_CLICK_COORDS = (306, 597)  # position of the "Total Residents" number
+TOTAL_RESIDENTS_CLICK_COORDS = (203, 258)  # position of the "Total Residents" number on the standalone public.tableau.com layout (no county page chrome pushing content down)
 MAX_SELECTION_ATTEMPTS = 5
 DOWNLOAD_TIMEOUT_MS = 20000
 
@@ -197,4 +197,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"FAILED: {e}", file=sys.stderr)
         sys.exit(1)
-

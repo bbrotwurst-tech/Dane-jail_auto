@@ -84,17 +84,51 @@ async def scrape():
         await data_page.keyboard.press("Escape")
         await data_page.wait_for_timeout(500)
 
-        # Confirmed via debug screenshots: this single click on "Download"
-        # fires the file download directly - there is no second confirm
-        # step / modal.
+        # The "See the Tableau browser window for download information"
+        # banner indicates the actual download may fire in a NEW tab/window
+        # opened after this click, not on data_page itself. So we listen for
+        # a "download" event on any page in the context - whichever page it
+        # actually fires on - rather than scoping expect_download to
+        # data_page alone.
         await data_page.screenshot(path="debug_before_download.png")
 
         download_locator = data_page.get_by_text("Download", exact=True).first
         await download_locator.wait_for(state="visible", timeout=10000)
 
-        async with data_page.expect_download(timeout=DOWNLOAD_TIMEOUT_MS) as download_info:
-            await download_locator.click()
-        download = await download_info.value
+        download_holder = {}
+        download_event = asyncio.Event()
+
+        def handle_download(dl):
+            download_holder["download"] = dl
+            download_event.set()
+
+        def handle_new_page(new_page):
+            new_page.on("download", handle_download)
+
+        context.on("page", handle_new_page)
+        data_page.on("download", handle_download)
+
+        await download_locator.click()
+
+        try:
+            await asyncio.wait_for(
+                download_event.wait(), timeout=DOWNLOAD_TIMEOUT_MS / 1000
+            )
+        except asyncio.TimeoutError:
+            await data_page.screenshot(path="debug_download_timeout.png")
+            for i, p in enumerate(context.pages):
+                try:
+                    await p.screenshot(path=f"debug_context_page_{i}.png")
+                except Exception:
+                    pass
+            await browser.close()
+            raise RuntimeError(
+                "No 'download' event fired on data_page or any new page "
+                "opened after the click. Check debug_download_timeout.png "
+                "and debug_context_page_*.png for what actually rendered."
+            )
+
+        download = download_holder["download"]
 
         await download.save_as(output_path)
         print(f"Saved: {output_path}")

@@ -8,6 +8,16 @@ Usage:
 
 Output:
     data/jail_snapshot_YYYY-MM-DD.csv
+
+Note on architecture:
+    We first load the county's embed page just to discover the underlying
+    public.tableau.com URL, then navigate to THAT URL directly as a fresh,
+    top-level (first-party) page. This avoids a third-party storage-access
+    failure we hit when driving the download from inside the danecounty.gov
+    iframe: Chromium denied `requestStorageAccess` for the cross-origin
+    Tableau frame, and Tableau's client-side export logic silently failed to
+    ever produce a download as a result. Running Tableau as the top-level
+    origin removes that restriction entirely.
 """
 
 import asyncio
@@ -17,11 +27,28 @@ from datetime import datetime, timezone
 
 from playwright.async_api import async_playwright
 
-URL = "https://cjc.danecounty.gov/Data-and-Dashboards/Jail-Snapshot"
+EMBED_URL = "https://cjc.danecounty.gov/Data-and-Dashboards/Jail-Snapshot"
 OUTPUT_DIR = "data"
 TOTAL_RESIDENTS_CLICK_COORDS = (306, 597)  # position of the "Total Residents" number
 MAX_SELECTION_ATTEMPTS = 5
 DOWNLOAD_TIMEOUT_MS = 20000
+
+
+def _attach_debug_listeners(pg, label):
+    pg.on(
+        "console",
+        lambda msg: print(f"[{label} console:{msg.type}] {msg.text}")
+        if msg.type == "error"
+        else None,
+    )
+    pg.on("pageerror", lambda err: print(f"[{label} error] {err}"))
+
+
+async def find_tableau_frame(pg):
+    for f in pg.frames:
+        if "public.tableau.com" in f.url:
+            return f
+    return None
 
 
 async def scrape():
@@ -35,26 +62,38 @@ async def scrape():
             viewport={"width": 1280, "height": 1550},
             accept_downloads=True,
         )
-        page = await context.new_page()
 
-        # Surface any JS console errors / uncaught exceptions from the page -
-        # if Tableau's download handler throws internally, this is the only
-        # way we'll see it, since it won't show up in screenshots.
-        page.on("console", lambda msg: print(f"[main page console:{msg.type}] {msg.text}") if msg.type == "error" else None)
-        page.on("pageerror", lambda err: print(f"[main page error] {err}"))
+        # --- Step 1: load the embed page just to discover the real
+        # public.tableau.com URL for this specific view ---
+        embed_page = await context.new_page()
+        _attach_debug_listeners(embed_page, "embed_page")
 
-        await page.goto(URL, wait_until="load", timeout=60000)
-        await page.wait_for_timeout(5000)
+        await embed_page.goto(EMBED_URL, wait_until="load", timeout=60000)
+        await embed_page.wait_for_timeout(5000)
 
-        tableau_frame = None
-        for f in page.frames:
-            if "public.tableau.com" in f.url:
-                tableau_frame = f
-                break
-
-        if tableau_frame is None:
+        embed_frame = await find_tableau_frame(embed_page)
+        if embed_frame is None:
             await browser.close()
-            raise RuntimeError("Could not find the Tableau iframe on the page")
+            raise RuntimeError("Could not find the Tableau iframe on the embed page")
+
+        tableau_url = embed_frame.url
+        print(f"Discovered Tableau URL: {tableau_url}")
+        await embed_page.close()
+
+        # --- Step 2: navigate to that URL directly as a first-party page ---
+        page = await context.new_page()
+        _attach_debug_listeners(page, "page")
+
+        await page.goto(tableau_url, wait_until="load", timeout=60000)
+        await page.wait_for_timeout(5000)
+        await page.screenshot(path="debug_direct_tableau_load.png")
+
+        # The direct public.tableau.com page may itself still wrap the viz in
+        # an internal iframe, or the viz may now be in the top-level frame.
+        # Handle both: prefer a nested tableau frame if present, else use
+        # the page itself as the interaction target.
+        inner_frame = await find_tableau_frame(page)
+        tableau_frame = inner_frame if inner_frame is not None else page.main_frame
 
         # Select the "Total Residents" mark - retry since selection is flaky
         selected = False
@@ -67,8 +106,14 @@ async def scrape():
                 break
 
         if not selected:
+            await page.screenshot(path="debug_selection_failed.png")
             await browser.close()
-            raise RuntimeError("Could not select the Total Residents mark after retries")
+            raise RuntimeError(
+                "Could not select the Total Residents mark after retries. "
+                "Check debug_selection_failed.png - click coordinates may "
+                "need recalibrating for the standalone Tableau layout "
+                "(toolbar/padding can differ from the embedded iframe)."
+            )
 
         # Open the Download menu, then the "Data" option (opens a new popup page)
         await tableau_frame.get_by_role("button", name="Download").click()
@@ -77,8 +122,7 @@ async def scrape():
         async with context.expect_page(timeout=20000) as new_page_info:
             await tableau_frame.get_by_role("menuitem", name="Data").click()
         data_page = await new_page_info.value
-        data_page.on("console", lambda msg: print(f"[data_page console:{msg.type}] {msg.text}") if msg.type == "error" else None)
-        data_page.on("pageerror", lambda err: print(f"[data_page error] {err}"))
+        _attach_debug_listeners(data_page, "data_page")
         await data_page.wait_for_timeout(2000)
         await data_page.screenshot(path="debug_popup_opened.png")
 
@@ -92,50 +136,10 @@ async def scrape():
         await data_page.keyboard.press("Escape")
         await data_page.wait_for_timeout(500)
 
-        # The "See the Tableau browser window for download information"
-        # banner indicates the actual download may fire in a NEW tab/window
-        # opened after this click, not on data_page itself. So we listen for
-        # a "download" event on any page in the context - whichever page it
-        # actually fires on - rather than scoping expect_download to
-        # data_page alone.
         await data_page.screenshot(path="debug_before_download.png")
 
         download_locator = data_page.get_by_text("Download", exact=True).first
         await download_locator.wait_for(state="visible", timeout=10000)
-
-        # Ground-truth check: log the actual element and its ancestors so we
-        # can see whether "Download" text resolves to the real interactive
-        # control or just a label/span with no click handler attached.
-        element_info = await download_locator.evaluate(
-            """el => {
-                const chain = [];
-                let node = el;
-                for (let i = 0; i < 4 && node; i++) {
-                    chain.push({
-                        tag: node.tagName,
-                        role: node.getAttribute && node.getAttribute('role'),
-                        classes: node.className,
-                        text: (node.textContent || '').trim().slice(0, 40),
-                    });
-                    node = node.parentElement;
-                }
-                return chain;
-            }"""
-        )
-        print("DOWNLOAD ELEMENT CHAIN:", element_info)
-
-        button_state = await download_locator.evaluate(
-            """el => {
-                const btn = el.closest('button');
-                if (!btn) return null;
-                return {
-                    disabled: btn.disabled,
-                    ariaDisabled: btn.getAttribute('aria-disabled'),
-                    classes: btn.className,
-                };
-            }"""
-        )
-        print("DOWNLOAD BUTTON STATE:", button_state)
 
         download_holder = {}
         download_event = asyncio.Event()
@@ -151,8 +155,7 @@ async def scrape():
         data_page.on("download", handle_download)
 
         # Click the ancestor that's actually the clickable control (button/
-        # role=button), not the bare text node, in case "Download" text is
-        # nested inside the real interactive element.
+        # role=button), not the bare text node.
         clickable = download_locator.locator(
             "xpath=ancestor-or-self::*[self::button or @role='button'][1]"
         )
@@ -173,8 +176,9 @@ async def scrape():
             await browser.close()
             raise RuntimeError(
                 "No 'download' event fired on data_page or any new page "
-                "opened after the click. Check debug_download_timeout.png "
-                "and debug_context_page_*.png for what actually rendered."
+                "opened after the click, even from the first-party Tableau "
+                "URL. Check debug_download_timeout.png and "
+                "debug_context_page_*.png for what actually rendered."
             )
 
         download = download_holder["download"]
@@ -193,4 +197,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"FAILED: {e}", file=sys.stderr)
         sys.exit(1)
-        
+

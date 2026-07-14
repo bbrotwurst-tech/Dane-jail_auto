@@ -37,9 +37,7 @@ DOWNLOAD_TIMEOUT_MS = 20000
 def _attach_debug_listeners(pg, label):
     pg.on(
         "console",
-        lambda msg: print(f"[{label} console:{msg.type}] {msg.text}")
-        if msg.type == "error"
-        else None,
+        lambda msg: print(f"[{label} console:{msg.type}] {msg.text}"),
     )
     pg.on("pageerror", lambda err: print(f"[{label} error] {err}"))
 
@@ -167,6 +165,19 @@ async def scrape():
         data_page.on("response", log_response)
         data_page.on("requestfailed", log_request_failed)
 
+        # Ground truth check: does a click event actually reach the document
+        # at all when we click the Download button? This tells us whether
+        # the issue is upstream (click never dispatches/lands) or downstream
+        # (click lands fine, but whatever handler runs produces no visible
+        # effect).
+        await data_page.evaluate(
+            """() => {
+                document.addEventListener('click', (e) => {
+                    console.log('DOC_CLICK_SEEN', e.target.tagName, e.target.className, e.isTrusted);
+                }, true);
+            }"""
+        )
+
         download_holder = {}
         download_event = asyncio.Event()
 
@@ -223,3 +234,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"FAILED: {e}", file=sys.stderr)
         sys.exit(1)
+

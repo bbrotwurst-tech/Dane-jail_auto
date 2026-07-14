@@ -1,4 +1,4 @@
-        """
+"""
 Scrapes the Dane County CJC Jail Snapshot Tableau dashboard for full
 resident-level demographic data (race, ethnicity, sex, age, booking date,
 length of stay, housing location, etc.) and saves it as a date-stamped CSV.

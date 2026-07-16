@@ -29,14 +29,16 @@ Architecture note (why this approach):
     download, it reads the Full Data table directly out of the rendered
     DOM using a real Playwright-driven browser (so it passes the WAF
     challenge just like a normal user would). It drives the grid's custom
-    virtualization with real mouse wheel events (vertical, then horizontal
-    at several vertical offsets), and reassembles a full row/column matrix
-    using aria-rowindex/aria-colindex as stable anchors - since the grid
-    only ever renders a small visible window of rows/columns at once,
-    naive "collect what's currently in the DOM" approaches produce
-    duplicated or incomplete rows. Verified against the dashboard's own
-    "734 total residents" figure: this produces 731 complete rows across
-    28 columns, matching the expected count.
+    virtualization with real mouse wheel events, doing a full horizontal
+    sweep at EVERY vertical scroll step (not just a handful of sampled
+    offsets) using aria-rowindex/aria-colindex as stable anchors to merge
+    everything into one row/column matrix. An earlier version swept
+    horizontally only at 4 sampled vertical positions, which produced the
+    right row COUNT (731, matching the dashboard's own total) but left
+    most rows with only their first ~10 of 28 columns ever captured -
+    those rows just weren't visible during one of the sparse sample
+    points. This version is slower (a full sweep per vertical step) but
+    actually complete.
 """
 
 import asyncio
@@ -249,44 +251,60 @@ async def scrape():
 
         await data_page.mouse.move(grid_box["x"], grid_box["y"])
 
-        # Vertical wheel pass
+        async def sweep_horizontal_at_current_position():
+            """Sweep left-to-right at whatever vertical scroll position we're
+            currently at, capturing every column for whatever rows are
+            visible right now, before moving further down. This is the fix:
+            doing this only at a handful of sampled vertical offsets (the
+            old approach) left ~700 of 731 rows with only their first ~10
+            columns ever captured, since those rows were never visible
+            during one of the sparse horizontal-sweep sample points."""
+            await data_page.mouse.wheel(-100000, 0)  # reset to left edge
+            await data_page.wait_for_timeout(120)
+            merge_snapshot(await extract_snapshot())
+
+            stable_rounds = 0
+            for _ in range(60):
+                await data_page.keyboard.down("Shift")
+                await data_page.mouse.wheel(300, 0)
+                await data_page.keyboard.up("Shift")
+                await data_page.wait_for_timeout(120)
+                new_count = merge_snapshot(await extract_snapshot())
+                if new_count == 0:
+                    stable_rounds += 1
+                    if stable_rounds > 4:
+                        break
+                else:
+                    stable_rounds = 0
+
+            # Reset horizontal scroll back to left before continuing the
+            # vertical pass, so the next vertical step starts from a known
+            # column position.
+            await data_page.mouse.wheel(-100000, 0)
+            await data_page.wait_for_timeout(120)
+
+        # Combined vertical + horizontal sweep: at every vertical step,
+        # fully sweep left-to-right before moving down, so every row gets
+        # every column captured regardless of where it happens to render.
+        await sweep_horizontal_at_current_position()  # capture row 1's full width first
+
         stable_rounds = 0
         for i in range(400):
             await data_page.mouse.wheel(0, 300)
             await data_page.wait_for_timeout(150)
-            new_count = merge_snapshot(await extract_snapshot())
-            if new_count == 0:
+            row_count_before = len(matrix)
+            await sweep_horizontal_at_current_position()
+            new_rows = len(matrix) - row_count_before
+            if new_rows == 0:
                 stable_rounds += 1
                 if stable_rounds > 10:
                     break
             else:
                 stable_rounds = 0
-        print(f"After vertical wheel pass: {len(matrix)} rows, {len(headers)} known columns")
+            if (i + 1) % 20 == 0:
+                print(f"  ...progress: {len(matrix)} rows, {len(headers)} columns so far")
 
-        # Horizontal wheel pass at a few vertical offsets
-        for v_offset in (0, 150, 300, 450):
-            await data_page.mouse.wheel(0, -100000)
-            await data_page.wait_for_timeout(200)
-            if v_offset:
-                await data_page.mouse.wheel(0, v_offset)
-                await data_page.wait_for_timeout(200)
-            merge_snapshot(await extract_snapshot())
-
-            stable_rounds = 0
-            for i in range(100):
-                await data_page.keyboard.down("Shift")
-                await data_page.mouse.wheel(300, 0)
-                await data_page.keyboard.up("Shift")
-                await data_page.wait_for_timeout(150)
-                new_count = merge_snapshot(await extract_snapshot())
-                if new_count == 0:
-                    stable_rounds += 1
-                    if stable_rounds > 6:
-                        break
-                else:
-                    stable_rounds = 0
-
-        print(f"After horizontal wheel pass: {len(matrix)} rows, {len(headers)} known columns")
+        print(f"After combined sweep: {len(matrix)} rows, {len(headers)} known columns")
 
         # Build final table from the matrix
         sorted_col_keys = sorted(headers.keys())

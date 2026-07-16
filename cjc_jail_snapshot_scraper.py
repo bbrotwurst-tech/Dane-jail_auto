@@ -43,7 +43,8 @@ import asyncio
 import csv
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from playwright.async_api import async_playwright
 
@@ -68,7 +69,11 @@ async def find_tableau_frame(pg):
 
 async def scrape():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # Stamp with Central time (not UTC) so the filename always matches the
+    # intuitive "today" for Dane County, regardless of when this runs. UTC
+    # caused manual evening runs to save under tomorrow's date (e.g. 10 PM
+    # Central is already 3 AM UTC the next day).
+    today = datetime.now(ZoneInfo("America/Chicago")).strftime("%Y-%m-%d")
     output_path = os.path.join(OUTPUT_DIR, f"jail_snapshot_{today}.csv")
 
     async with async_playwright() as p:

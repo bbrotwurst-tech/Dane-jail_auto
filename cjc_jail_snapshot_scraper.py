@@ -156,3 +156,230 @@ async def scrape():
         data_page = await new_page_info.value
         _attach_debug_listeners(data_page, "data_page")
         await data_page.wait_for_timeout(2000)
+
+        # Switch to Full Data tab and select all fields
+        await data_page.click("text=Full Data")
+        await data_page.wait_for_timeout(1500)
+        await data_page.click("text=Show Fields")
+        await data_page.wait_for_timeout(1000)
+        await data_page.click("text=(All)")
+        await data_page.wait_for_timeout(1000)
+        await data_page.keyboard.press("Escape")
+        await data_page.wait_for_timeout(1000)
+
+        # --- Crank up the rows-per-page box so everything renders at once ---
+        # This is the small numeric input near the bottom-left of the Full
+        # Data view (defaults to 200).
+        candidate = data_page.locator("input").first
+        try:
+            await candidate.click(click_count=3)  # select existing text
+            await candidate.fill(ROW_COUNT_OVERRIDE)
+            await candidate.press("Enter")
+            await data_page.wait_for_timeout(2000)
+            print(f"Set row count input to {ROW_COUNT_OVERRIDE}")
+        except Exception as e:
+            print(f"Could not set row count input (will rely on scrolling instead): {e}")
+
+        await data_page.screenshot(path="debug_full_data_view.png")
+
+        grid_box = await data_page.evaluate(
+            """() => {
+                const grid = document.querySelector('[role="grid"]');
+                if (!grid) return null;
+                const r = grid.getBoundingClientRect();
+                return {x: r.x + r.width / 2, y: r.y + r.height / 2, w: r.width, h: r.height};
+            }"""
+        )
+        print("GRID BOX:", grid_box)
+
+        if grid_box is None:
+            await data_page.screenshot(path="debug_no_grid_found.png")
+            await browser.close()
+            raise RuntimeError(
+                "Could not find [role='grid'] element at all. "
+                "Check debug_no_grid_found.png"
+            )
+
+        # --- Scrape the rendered table directly from the DOM ---
+        # This grid is custom-virtualized with no native CSS overflow
+        # (scrollHeight === clientHeight), so JS scrollTop manipulation is a
+        # no-op. It responds to real mouse wheel events instead, driven here
+        # via Playwright's mouse.wheel() (genuine trusted input). Rows/columns
+        # are anchored by aria-rowindex/aria-colindex so repeated scroll
+        # snapshots merge into one matrix instead of producing duplicate or
+        # fragmented rows as different column subsets scroll into view.
+
+        async def extract_snapshot():
+            return await data_page.evaluate(
+                """() => {
+                    const out = [];
+                    const rows = Array.from(document.querySelectorAll('[role="row"]'));
+                    rows.forEach((r, rPos) => {
+                        const rowIndexAttr = r.getAttribute('aria-rowindex');
+                        const rowIndex = rowIndexAttr !== null ? parseInt(rowIndexAttr, 10) : null;
+                        const cells = Array.from(r.querySelectorAll('[role="gridcell"], [role="columnheader"]'));
+                        cells.forEach((c, cPos) => {
+                            const colIndexAttr = c.getAttribute('aria-colindex');
+                            const colIndex = colIndexAttr !== null ? parseInt(colIndexAttr, 10) : null;
+                            const isHeader = c.getAttribute('role') === 'columnheader';
+                            out.push({
+                                rowIndex: rowIndex,
+                                rowPos: rPos,
+                                colIndex: colIndex,
+                                colPos: cPos,
+                                isHeader: isHeader,
+                                text: c.textContent.trim(),
+                            });
+                        });
+                    });
+                    return out;
+                }"""
+            )
+
+        # Check whether aria-rowindex/aria-colindex are actually present -
+        # if not, we fall back to positional indices, which is less robust
+        # under virtualization but still better than nothing.
+        probe = await extract_snapshot()
+        has_aria_index = any(c["rowIndex"] is not None for c in probe) and any(
+            c["colIndex"] is not None for c in probe
+        )
+        print(f"Using aria-rowindex/aria-colindex: {has_aria_index}")
+
+        # matrix[row_key][col_key] = text ; headers[col_key] = header text
+        matrix = {}
+        headers = {}
+
+        def merge_snapshot(cells):
+            added = 0
+            for c in cells:
+                row_key = c["rowIndex"] if has_aria_index else c["rowPos"]
+                col_key = c["colIndex"] if has_aria_index else c["colPos"]
+                if row_key is None or col_key is None or not c["text"]:
+                    continue
+                if c["isHeader"]:
+                    if col_key not in headers:
+                        headers[col_key] = c["text"]
+                        added += 1
+                    continue
+                row = matrix.setdefault(row_key, {})
+                if col_key not in row:
+                    row[col_key] = c["text"]
+                    added += 1
+            return added
+
+        merge_snapshot(probe)
+
+        await data_page.mouse.move(grid_box["x"], grid_box["y"])
+
+        async def sweep_horizontal_at_current_position():
+            """Sweep left-to-right at whatever vertical scroll position we're
+            currently at, capturing every column for whatever rows are
+            visible right now, before moving further down. This is the fix:
+            doing this only at a handful of sampled vertical offsets (the
+            old approach) left ~700 of 731 rows with only their first ~10
+            columns ever captured, since those rows were never visible
+            during one of the sparse horizontal-sweep sample points."""
+            await data_page.mouse.wheel(-100000, 0)  # reset to left edge
+            await data_page.wait_for_timeout(120)
+            merge_snapshot(await extract_snapshot())
+
+            stable_rounds = 0
+            for _ in range(60):
+                await data_page.keyboard.down("Shift")
+                await data_page.mouse.wheel(300, 0)
+                await data_page.keyboard.up("Shift")
+                await data_page.wait_for_timeout(120)
+                new_count = merge_snapshot(await extract_snapshot())
+                if new_count == 0:
+                    stable_rounds += 1
+                    if stable_rounds > 4:
+                        break
+                else:
+                    stable_rounds = 0
+
+            # Reset horizontal scroll back to left before continuing the
+            # vertical pass, so the next vertical step starts from a known
+            # column position.
+            await data_page.mouse.wheel(-100000, 0)
+            await data_page.wait_for_timeout(120)
+
+        # Combined vertical + horizontal sweep: at every vertical step,
+        # fully sweep left-to-right before moving down, so every row gets
+        # every column captured regardless of where it happens to render.
+        await sweep_horizontal_at_current_position()  # capture row 1's full width first
+
+        stable_rounds = 0
+        for i in range(400):
+            await data_page.mouse.wheel(0, 300)
+            await data_page.wait_for_timeout(150)
+            row_count_before = len(matrix)
+            await sweep_horizontal_at_current_position()
+            new_rows = len(matrix) - row_count_before
+            if new_rows == 0:
+                stable_rounds += 1
+                if stable_rounds > 10:
+                    break
+            else:
+                stable_rounds = 0
+            if (i + 1) % 20 == 0:
+                print(f"  ...progress: {len(matrix)} rows, {len(headers)} columns so far")
+
+        print(f"After combined sweep: {len(matrix)} rows, {len(headers)} known columns")
+
+        # Strip the Tableau worksheet-name prefix ("snapshot") that
+        # sometimes gets concatenated onto header text - see module
+        # docstring for why this varies run to run.
+        headers = {k: strip_sheet_prefix(v) for k, v in headers.items()}
+
+        if EXPECTED_KEY_COLUMN not in headers.values():
+            await data_page.screenshot(path="debug_missing_key_column.png")
+            await browser.close()
+            raise RuntimeError(
+                f"Expected '{EXPECTED_KEY_COLUMN}' column after prefix-stripping, "
+                f"but found columns: {sorted(headers.values())}. "
+                "The Tableau header prefix pattern may have changed - "
+                "check debug_missing_key_column.png."
+            )
+
+        # Build final table from the matrix
+        sorted_col_keys = sorted(headers.keys())
+        header_row = [headers[k] for k in sorted_col_keys]
+        sorted_row_keys = sorted(matrix.keys())
+        table_data = [header_row]
+        for rk in sorted_row_keys:
+            row = matrix[rk]
+            table_data.append([row.get(ck, "") for ck in sorted_col_keys])
+
+        print(f"Rows extracted from DOM: {len(table_data)}")
+
+        if not table_data or len(table_data) < 2:
+            await data_page.screenshot(path="debug_extraction_failed.png")
+            await browser.close()
+            raise RuntimeError(
+                f"Extraction returned too few rows ({len(table_data)}). "
+                "Check debug_extraction_failed.png and debug_full_data_view.png "
+                "to see what the table actually looked like."
+            )
+
+        # table_data[0] is the header row (built from `headers`), the rest
+        # are data rows in row-index order.
+        header, *data_rows = table_data
+
+        with open(output_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+            writer.writerows(data_rows)
+
+        print(f"Saved: {output_path} ({len(data_rows)} data rows, {len(header)} columns)")
+
+        await browser.close()
+        return output_path
+
+
+if __name__ == "__main__":
+    try:
+        path = asyncio.run(scrape())
+        print(f"Success: {path}")
+    except Exception as e:
+        print(f"FAILED: {e}", file=sys.stderr)
+        sys.exit(1)

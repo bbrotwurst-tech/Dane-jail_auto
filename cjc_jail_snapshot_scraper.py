@@ -46,11 +46,23 @@ Architecture note (why this approach):
     Which variant gets captured depends on which render pass first
     populated that header cell, so it's stripped defensively below rather
     than relying on catching a "clean" pass.
+
+    Data-vs-file-timestamp note (added after a mismatch was found in
+    production): the CJC dashboard's underlying data only refreshes once
+    per day (around 12:06 AM). If this scraper runs before that day's
+    refresh has happened, or if the refresh is delayed, the DOM will
+    render the PREVIOUS day's snapshot even though the scrape itself runs
+    "today." Naming the output file from datetime.now() alone silently
+    hides that drift. So after extraction, we now parse the actual
+    `Timestamp` value embedded in the scraped data itself and use THAT
+    date for the filename, logging a loud warning if it disagrees with
+    the scrape's wall-clock date.
 """
 
 import asyncio
 import csv
 import os
+import re
 import sys
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -63,6 +75,7 @@ TOTAL_RESIDENTS_CLICK_COORDS = (203, 258)  # position of the "Total Residents" n
 MAX_SELECTION_ATTEMPTS = 5
 ROW_COUNT_OVERRIDE = "2000"  # comfortably above the ~734 total residents, so everything loads in one page
 EXPECTED_KEY_COLUMN = "Namenum"  # sanity check: this must survive prefix-stripping
+DATA_TIMESTAMP_COLUMN = "Timestamp"  # column holding the dashboard's own "as of" stamp, e.g. "7/18/2026 12:06:39 AM"
 
 
 def _attach_debug_listeners(pg, label):
@@ -89,14 +102,45 @@ def strip_sheet_prefix(text, prefix="snapshot"):
     return text
 
 
+def parse_data_timestamp(raw_value):
+    """Parse the dashboard's own 'Timestamp' field, e.g.
+    '7/18/2026 12:06:39 AM', and return it as a date (America/Chicago,
+    same tz the dashboard is authored in). Returns None if it can't be
+    parsed, so callers can fall back gracefully instead of crashing a
+    whole scrape run over a formatting quirk.
+    """
+    raw_value = raw_value.strip()
+    for fmt in ("%m/%d/%Y %I:%M:%S %p", "%m/%d/%Y %H:%M:%S"):
+        try:
+            dt = datetime.strptime(raw_value, fmt)
+            return dt.replace(tzinfo=ZoneInfo("America/Chicago")).date()
+        except ValueError:
+            continue
+    return None
+
+
+def most_common_data_date(data_rows, timestamp_col_index):
+    """Return the most common parsed date among all rows' Timestamp
+    values. Using the mode (not just row 0) guards against a handful of
+    stray/malformed cells throwing off the whole determination."""
+    counts = {}
+    for row in data_rows:
+        if timestamp_col_index >= len(row):
+            continue
+        parsed = parse_data_timestamp(row[timestamp_col_index])
+        if parsed is not None:
+            counts[parsed] = counts.get(parsed, 0) + 1
+    if not counts:
+        return None
+    return max(counts.items(), key=lambda kv: kv[1])[0]
+
+
 async def scrape():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    # Stamp with Central time (not UTC) so the filename always matches the
-    # intuitive "today" for Dane County, regardless of when this runs. UTC
-    # caused manual evening runs to save under tomorrow's date (e.g. 10 PM
-    # Central is already 3 AM UTC the next day).
-    today = datetime.now(ZoneInfo("America/Chicago")).strftime("%Y-%m-%d")
-    output_path = os.path.join(OUTPUT_DIR, f"jail_snapshot_{today}.csv")
+    # Wall-clock scrape date, Central time (not UTC) - used only as a
+    # fallback and for the staleness comparison below. The FILENAME itself
+    # now comes from the data's own timestamp (see below), not this value.
+    scrape_run_date = datetime.now(ZoneInfo("America/Chicago")).date()
 
     async with async_playwright() as p:
         browser = await p.chromium.launch()
@@ -364,6 +408,50 @@ async def scrape():
         # table_data[0] is the header row (built from `headers`), the rest
         # are data rows in row-index order.
         header, *data_rows = table_data
+
+        # --- Determine the file's date from the DATA itself, not the ---
+        # --- scrape's wall-clock time.                                ---
+        # The dashboard only refreshes once a day (~12:06 AM). If this
+        # scrape runs before that refresh (or the refresh is delayed), the
+        # DOM will still be showing the PREVIOUS day's snapshot even
+        # though we're scraping "today." Trusting datetime.now() for the
+        # filename silently bakes that drift into the data pipeline
+        # (this is exactly what caused jail_snapshot_2026-07-19.csv to be
+        # full of July 18 timestamps). So: find the Timestamp column,
+        # take the most common date it contains, and name the file after
+        # THAT, logging a loud warning if it disagrees with the scrape
+        # run's own date.
+        data_date = None
+        if DATA_TIMESTAMP_COLUMN in header:
+            ts_col_index = header.index(DATA_TIMESTAMP_COLUMN)
+            data_date = most_common_data_date(data_rows, ts_col_index)
+
+        if data_date is None:
+            print(
+                f"WARNING: could not parse a data date from the '{DATA_TIMESTAMP_COLUMN}' "
+                f"column; falling back to scrape wall-clock date {scrape_run_date}. "
+                "Treat this file's date as unverified."
+            )
+            data_date = scrape_run_date
+        elif data_date != scrape_run_date:
+            print(
+                f"WARNING: STALE DASHBOARD DATA. Scrape ran on {scrape_run_date}, but the "
+                f"scraped rows are stamped {data_date} (dashboard has not refreshed yet, "
+                "or refresh is delayed). Naming file after the DATA date, not the scrape "
+                "date, to avoid a mismatch between filename and contents."
+            )
+
+        output_path = os.path.join(OUTPUT_DIR, f"jail_snapshot_{data_date.isoformat()}.csv")
+
+        if os.path.exists(output_path):
+            print(
+                f"WARNING: {output_path} already exists (likely because the dashboard "
+                "still hasn't refreshed since the last run that wrote this file). "
+                "Not overwriting a working file silently - writing a "
+                "'.rescrape' suffixed copy instead for manual comparison."
+            )
+            base, ext = os.path.splitext(output_path)
+            output_path = f"{base}.rescrape{ext}"
 
         with open(output_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)

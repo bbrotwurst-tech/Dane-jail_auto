@@ -9,7 +9,7 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20  # combined vertical+horizontal sweep is slower than the old sparse-sample approach - bumped from 10 to give headroom
 
     steps:
       - name: Checkout repo

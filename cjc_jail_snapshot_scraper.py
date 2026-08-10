@@ -57,6 +57,14 @@ Architecture note (why this approach):
     `Timestamp` value embedded in the scraped data itself and use THAT
     date for the filename, logging a loud warning if it disagrees with
     the scrape's wall-clock date.
+
+    Retry note (added after a run failed on a transient Tableau 503):
+    both navigation steps - loading the embed page to discover the real
+    public.tableau.com URL, and then loading that URL directly - can fail
+    with a 503 from Tableau's own backend under load. Neither failure has
+    anything to do with our scraping logic, so both are now wrapped in
+    retry-with-backoff helpers instead of failing the whole run on one
+    bad load.
 """
 
 import asyncio
@@ -77,6 +85,12 @@ ROW_COUNT_OVERRIDE = "2000"  # comfortably above the ~734 total residents, so ev
 EXPECTED_KEY_COLUMN = "Namenum"  # sanity check: this must survive prefix-stripping
 DATA_TIMESTAMP_COLUMN = "Timestamp"  # column holding the dashboard's own "as of" stamp, e.g. "7/18/2026 12:06:39 AM"
 
+EMBED_LOAD_MAX_ATTEMPTS = 4
+EMBED_LOAD_RETRY_DELAY_SECONDS = 15  # base delay; grows with each attempt
+
+TABLEAU_LOAD_MAX_ATTEMPTS = 4
+TABLEAU_LOAD_RETRY_DELAY_SECONDS = 15
+
 
 def _attach_debug_listeners(pg, label):
     pg.on("console", lambda msg: print(f"[{label} console:{msg.type}] {msg.text}"))
@@ -88,6 +102,112 @@ async def find_tableau_frame(pg):
         if "public.tableau.com" in f.url:
             return f
     return None
+
+
+async def load_embed_page_with_retry(context):
+    """Load the CJC embed page and find the Tableau iframe, retrying on
+    transient failures (e.g. Tableau's public.tableau.com backend
+    returning a 503 under load). Returns (page, frame). Raises
+    RuntimeError if the iframe still can't be found after all attempts.
+    """
+    last_error = None
+    for attempt in range(1, EMBED_LOAD_MAX_ATTEMPTS + 1):
+        embed_page = await context.new_page()
+        _attach_debug_listeners(embed_page, "embed_page")
+
+        saw_503 = False
+
+        def _check_503(response):
+            nonlocal saw_503
+            if response.status == 503:
+                saw_503 = True
+
+        embed_page.on("response", _check_503)
+
+        try:
+            await embed_page.goto(EMBED_URL, wait_until="load", timeout=60000)
+            await embed_page.wait_for_timeout(5000)
+            embed_frame = await find_tableau_frame(embed_page)
+
+            if embed_frame is not None:
+                return embed_page, embed_frame
+
+            last_error = "iframe not found after load"
+            if saw_503:
+                last_error += " (saw a 503 response during load - likely Tableau backend hiccup)"
+
+        except Exception as e:
+            last_error = str(e)
+
+        await embed_page.screenshot(path=f"debug_embed_load_attempt_{attempt}.png")
+        await embed_page.close()
+
+        if attempt < EMBED_LOAD_MAX_ATTEMPTS:
+            delay = EMBED_LOAD_RETRY_DELAY_SECONDS * attempt
+            print(f"Attempt {attempt}/{EMBED_LOAD_MAX_ATTEMPTS} failed ({last_error}). "
+                  f"Retrying in {delay}s...")
+            await asyncio.sleep(delay)
+
+    raise RuntimeError(
+        f"Could not load the Tableau iframe after {EMBED_LOAD_MAX_ATTEMPTS} attempts. "
+        f"Last error: {last_error}. Check debug_embed_load_attempt_*.png screenshots."
+    )
+
+
+async def load_tableau_page_with_retry(context, tableau_url):
+    """Navigate directly to the discovered public.tableau.com URL, retrying
+    on transient failures (e.g. a 503 during this second navigation too).
+    Returns (page, tableau_frame) once loaded successfully.
+    """
+    last_error = None
+    for attempt in range(1, TABLEAU_LOAD_MAX_ATTEMPTS + 1):
+        page = await context.new_page()
+        _attach_debug_listeners(page, "page")
+
+        saw_503 = False
+
+        def _check_503(response):
+            nonlocal saw_503
+            if response.status == 503:
+                saw_503 = True
+
+        page.on("response", _check_503)
+
+        try:
+            await page.goto(tableau_url, wait_until="load", timeout=60000)
+            await page.wait_for_timeout(5000)
+            await page.screenshot(path=f"debug_direct_tableau_load_attempt_{attempt}.png")
+
+            inner_frame = await find_tableau_frame(page)
+            tableau_frame = inner_frame if inner_frame is not None else page.main_frame
+
+            # Quick sanity check that something actually rendered before
+            # committing to this attempt - an empty/blank frame here means
+            # the load technically "succeeded" but produced nothing usable.
+            body_text = await tableau_frame.locator("body").inner_text()
+            if body_text.strip():
+                return page, tableau_frame
+
+            last_error = "page loaded but Tableau frame body was empty"
+            if saw_503:
+                last_error += " (saw a 503 response during load)"
+
+        except Exception as e:
+            last_error = str(e)
+
+        await page.screenshot(path=f"debug_tableau_load_failed_attempt_{attempt}.png")
+        await page.close()
+
+        if attempt < TABLEAU_LOAD_MAX_ATTEMPTS:
+            delay = TABLEAU_LOAD_RETRY_DELAY_SECONDS * attempt
+            print(f"Tableau page load attempt {attempt}/{TABLEAU_LOAD_MAX_ATTEMPTS} failed "
+                  f"({last_error}). Retrying in {delay}s...")
+            await asyncio.sleep(delay)
+
+    raise RuntimeError(
+        f"Could not load the Tableau page after {TABLEAU_LOAD_MAX_ATTEMPTS} attempts. "
+        f"Last error: {last_error}. Check debug_tableau_load_failed_attempt_*.png screenshots."
+    )
 
 
 def strip_sheet_prefix(text, prefix="snapshot"):
@@ -148,30 +268,15 @@ async def scrape():
             viewport={"width": 1280, "height": 1550},
         )
 
-        # --- Step 1: discover the real public.tableau.com URL ---
-        embed_page = await context.new_page()
-        _attach_debug_listeners(embed_page, "embed_page")
-        await embed_page.goto(EMBED_URL, wait_until="load", timeout=60000)
-        await embed_page.wait_for_timeout(5000)
-
-        embed_frame = await find_tableau_frame(embed_page)
-        if embed_frame is None:
-            await browser.close()
-            raise RuntimeError("Could not find the Tableau iframe on the embed page")
+        # --- Step 1: discover the real public.tableau.com URL (with retry) ---
+        embed_page, embed_frame = await load_embed_page_with_retry(context)
 
         tableau_url = embed_frame.url
         print(f"Discovered Tableau URL: {tableau_url}")
         await embed_page.close()
 
-        # --- Step 2: navigate directly (first-party, passes WAF like a real user) ---
-        page = await context.new_page()
-        _attach_debug_listeners(page, "page")
-        await page.goto(tableau_url, wait_until="load", timeout=60000)
-        await page.wait_for_timeout(5000)
-        await page.screenshot(path="debug_direct_tableau_load.png")
-
-        inner_frame = await find_tableau_frame(page)
-        tableau_frame = inner_frame if inner_frame is not None else page.main_frame
+        # --- Step 2: navigate directly (first-party, passes WAF like a real user), with retry ---
+        page, tableau_frame = await load_tableau_page_with_retry(context, tableau_url)
 
         # Select the "Total Residents" mark - retry since selection is flaky
         selected = False

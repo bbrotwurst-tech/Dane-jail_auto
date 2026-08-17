@@ -290,3 +290,49 @@ name_number,inmate_name,age,address,booking_datetime,booking_type,statutes,offen
 332320,"RUDNICK, DARIN JOHN",56,"PORTAGE, WI 53901",15:02:39 08/02/26,Arrest,947.01(1),Disorderly Conduct,1
 395447,"PEREZ GUTIERREZ, ROBERTO CARLOS",47,"MILWAUKEE, WI 53207",17:10:24 08/02/26,Arrest Warrant,968.09,Failure to Appear,1
 265958,"VANKOOTEN, CHRISTOPHER ALLEN",66,"POYNETTE, WI 53955",21:00:00 08/02/26,Arrest,968.075; 947.01(1); 973.10,Domestic - Modifier; Disorderly Conduct; Probation/Parole Violation - VOP,3
+267740,"DISALVO, ZACHARY JOHN",42,"MADISON, WI 53704",13:02:00 08/03/26,Arrest Warrant,968.09,Failure to Appear,1
+69701,"KRUEGER, BRANDEN COLE",44,"COLUMBUS, WI 53925",14:30:19 08/03/26,Commitment Order,785.04(2)(a),Contempt of Court - Punitive Sanction,1
+280410,"TAYLOR, KAMRON JAMES",18,"PRAIRIE DU SAC, WI 53578",17:02:00 08/03/26,Arrest,943.01(1); 943.017(1),Criminal Damage to Property; Graffiti,2
+318167,"ZWETZ, CAINE WALKER",41,"PORTAGE, WI 53901",18:58:00 08/03/26,Arrest Warrant,9999.99(99K),Other County/Jurisdiction Warrant,1
+48514,"MCGHEE, IVAN J II",49,"PLAIN, WI 53577",19:00:00 08/03/26,Serving Sentence,346.65(2)(f),OWI with child <16,1
+160669,"MARTIN, MATTHEW RYAN",41,"PORTAGE, WI 53901",20:06:00 08/03/26,Arrest,940.60(2); 947.01(1),Substantial Battery; Disorderly Conduct,2
+395532,"FISHER, MATTHEW HUNTER",22,"RENSSELAER, IN 47978 0000",00:15:00 08/04/26,Arrest,961.41(3g)(e); 961.573(1),Possession of THC (Tetrahydrocannabinols); Possession of Drug Paraphernalia,2
+395529,"ROSALES, SECOYA HUYANA,CAMILLA,CANDIDA",23,", IN 47978 0000",02:13:00 08/04/26,Arrest,961.41(3g)(e); 961.573(1); 346.63(1)(am),Possession of THC (Tetrahydrocannabinols); Possession of Drug Paraphernalia; Operating with Restricted Controlled Substance in Blood - RCS,3
+395523,"SCHWARTZ, ALYSSA LYNN",36,"FRIENDSHIP, WI 53934",03:00:00 08/04/26,Out of County Hold,9999.99(99K),Other County/Jurisdiction Warrant,1
+386116,"RATLIFF, LAWRENCE CURTIS",35,"KENOSHA, WI 53140",11:48:13 08/04/26,Arrest,782.00,Writ,1
+58822,"ZIELER, MATTHEW DONALD",36,"LAKE DELTON, WI 53940",14:17:34 08/04/26,Serving Sentence,346.63(1)(b),Operating with Prohibited Alcohol Concentration - PAC,1
+27995,"GLICK, JEREMY LAVERNE",50,"PARDEEVILLE, WI 53954",14:58:00 08/04/26,Violation of Probation / Parole,973.10,Probation/Parole Violation - VOP,1
+217312,"BRITT, JOHNELL LASHAWN",28,"MADISON, WI 53704",15:00:00 08/04/26,"Out of County Hold rpjlbsr.x3 08/10/26 Booking Summary Report, by Date and Time Page 5 of 15",9999.99(99L),Other County Hold,1
+385576,"TEMPLE, AUSTIN STEVEN",38,"MIDDLETON, WI 53562",15:00:00 08/04/26,Arrest Warrant,968.09; 9999.99(99K),Failure to Appear; Other County/Jurisdiction Warrant,2
+136925,"PROSSER, ERIC EDWARD",40,"COLUMBUS, WI 53925",19:00:00 08/04/26,Serving Sentence,346.63(1)(a),Operating While Intoxicated - OWI,1
+51735,"GONZALEZ, TONY JR",49,"MONTELLO, WI 53949",20:32:00 08/04/26,Arrest,343.44(1)(b); 347.413(1),OAR - Operate Motor Vehicle While Revoked; Failure to Install Ignition Interlock Device / Tampering / Violate Order,2
+387580,"DENTON, JEFFREY CARLOS",36,"REDGRANITE, WI 54970",00:29:37 08/05/26,Arrest,973.10; 946.41(1); 946.49(1)(a),Probation/Parole Violation - VOP; Obstructing or Resisting an Officer; Misdemeanor Bail Jumping,3
+337283,"WILKE, JOSEPH MICHAEL",29,"PORTAGE, WI 53901",01:49:00 08/05/26,Arrest,947.01(1); 968.075; 943.01(1); 973.10; 946.41(1),Disorderly Conduct; Domestic - Modifier; Criminal Damage to Property; Probation/Parole Violation - VOP; Obstructing or Resisting an Officer,5
+385647,"SAMMER, JOHN ROBERT",32,"MILWAUKEE, WI 53207",10:12:17 08/05/26,Arrest,9999.99(99K); 946.41(1),Other County/Jurisdiction Warrant; Obstructing or Resisting an Officer,2
+251513,"BROWN, BOBBI JO",46,"ARLINGTON, WI 53911",10:48:51 08/05/26,Arrest,943.20(1)(a),Theft - Movable Property,1
+78657,"WHITLEY, WESLEY BEN",71,"LOCKHART, TX 78644-3369",11:04:31 08/05/26,Arrest,943.205(1); 943.20(1)(a); 943.70(2)(a)3,Theft of Trade Secrets; Theft - Movable Property; Computer Crimes - Access Data,3
+163453,"SCHAFER, RUSSELL JAMES",43,"LODI, WI 53555",11:23:58 08/05/26,"Arrest rpjlbsr.x3 08/10/26 Booking Summary Report, by Date and Time Page 8 of 15",943.20(1)(a),Theft - Movable Property,1
+88993,"WADE, RAYMOND WILLIAM",76,"ENDEAVOR, WI 53930",13:35:00 08/05/26,Arrest Warrant,968.09,Failure to Appear,1
+395605,"MATA VELASQUEZ, ABISAI ALEXANDER",27,"CHARLOTTE, NC",16:11:32 08/05/26,Arrest,343.05(2)(a)2,Operating CMV Without a License - Non-resident,1
+353595,"SIMPSON, BLAKE XAVIER",19,"LODI, WI 53555",18:21:00 08/05/26,Arrest,943.01(2)(d),Felony Criminal Damage to property,1
+70845,"BOESEL, JAKE JOHN",35,"PORTAGE, WI 53901",21:32:00 08/05/26,Arrest,968.075; 947.01(1); 946.41(1); 961.41(3g)(am),Domestic - Modifier; Disorderly Conduct; Obstructing or Resisting an Officer; Possession of Narcotic Drugs,4
+27609,"LANCASTER, JASON NAMORE",54,"PORTAGE, WI 53901",23:35:00 08/05/26,Arrest,946.49(1)(a); 973.10,Misdemeanor Bail Jumping; Probation/Parole Violation - VOP,2
+395628,"KLIMEK, ROGER THOMAS",66,"CHIPPEWA FALLS, WI 54729",02:00:00 08/06/26,Arrest,946.49(1)(a),Misdemeanor Bail Jumping,1
+395642,"GAINES, DEONTA AKEEM",30,"MADISON, WI 53711",14:49:47 08/06/26,Out of County Hold,9999.99(99L),Other County Hold,1
+102023,"HOESCHELE, DANIEL JOHN",63,"FALL RIVER, WI 53932",17:39:08 08/06/26,Arrest,946.49(1)(b),Felony Bail Jumping,1
+366978,"MCDANIEL, LAMIKA NAKENA",36,"MADISON, WI 53719",19:00:00 08/06/26,Serving Sentence,346.04(3),Vehicle Operator Flee/Elude Officer,1
+395667,"DENNING, HANNAH ELIZABETH",36,"MADISON, WI 53703",21:28:00 08/06/26,"Arrest rpjlbsr.x3 08/10/26 Booking Summary Report, by Date and Time Page 11 of 15",343.44(1)(b); 347.413(1),OAR - Operate Motor Vehicle While Revoked; Failure to Install Ignition Interlock Device / Tampering / Violate Order,2
+395673,"CRAFT, DARIUS XAVIER",26,"RACINE, WI 53404",22:04:00 08/06/26,Arrest Warrant,9999.99(99K),Other County/Jurisdiction Warrant,1
+51054,"FITZ, COURTNEY ANN",40,"COLUMBUS, WI 53925",12:50:00 08/07/26,Arrest,961.41(3g)(g); 961.573(1); 961.41(3g)(am),Possession of Methamphetamine; Possession of Drug Paraphernalia; Possession of Narcotic Drugs,3
+5174,"LITTLEBEAR, ADRIENNE HOPE",41,"RIO, WI 53960",15:57:55 08/07/26,Violation of Probation / Parole,973.10,Probation/Parole Violation - VOP,1
+395709,"GREEN, DAVION ORELL",29,"MILWAUKEE, WI 53218",16:07:39 08/07/26,Arrest,9999.99(99K),Other County/Jurisdiction Warrant,1
+67231,"BEERS, KARLA ANN",60,"FALL RIVER, WI 53932",17:41:03 08/07/26,Arrest,947.01(1); 940.60(1),Disorderly Conduct; Battery,2
+376242,"NASH, ANITA L",42,"CALUMET PARK, IL 60827",19:00:00 08/07/26,"Serving Sentence rpjlbsr.x3 08/10/26 Booking Summary Report, by Date and Time Page 13 of 15",961.573(1),Possession of Drug Paraphernalia,1
+67521,"FANDRICH, JEROD CHARLES",41,"PORTAGE, WI 53901",22:02:00 08/07/26,Arrest,947.01(1); 968.075; 940.60(2),Disorderly Conduct; Domestic - Modifier; Substantial Battery,3
+86348,"WEISENSEL, BRYAN PHILIP",34,"PARDEEVILLE, WI 53954",22:25:00 08/07/26,Arrest,346.63(1)(a); 346.57(2),Operating While Intoxicated - OWI; Unreasonable and Imprudent Speed/Failure to Keep Vehicle Under,2
+1556,"BEEBE, TROY EDWARD",57,"PORTAGE, WI 53901",03:55:00 08/08/26,"Arrest rpjlbsr.x3 08/10/26 Booking Summary Report, by Date and Time Page 14 of 15",346.63(1)(a); 347.48(2m),Operating While Intoxicated - OWI; Mandatory Seatbelts Requirement,2
+258030,"NIELSEN, JACKSON DAVID",23,"MADISON, WI 53718",17:44:16 08/08/26,Arrest,961.573(1); 961.41(3g)(e),Possession of Drug Paraphernalia; Possession of THC (Tetrahydrocannabinols),2
+112832,"CHOLKA, PHILLIP TERRANCE",59,"WISCONSIN DELLS, WI 53965",22:19:00 08/08/26,Arrest,947.01(1); 968.075; 973.10,Disorderly Conduct; Domestic - Modifier; Probation/Parole Violation - VOP,3
+162480,"THOMAS, MATTHEW ALAN",37,"PORTAGE, WI 53901",23:17:00 08/08/26,"Arrest rpjlbsr.x3 08/10/26 Booking Summary Report, by Date and Time Page 15 of 15",973.10,Probation/Parole Violation - VOP,1
+287686,"CROSS, DOMINIC VERRELL",43,"MADISON, WI 53704",02:38:00 08/09/26,Arrest,346.63(1)(am); 343.44(1)(b); 347.413(1); 973.10,Operating with Restricted Controlled Substance in Blood - RCS; OAR - Operate Motor Vehicle While Revoked; Failure to Install Ignition Interlock Device / Tampering / Violate Order; Probation/Parole Violation - VOP,4
+395824,"KOSOKO, TAJUDEEN ADEMOLA",37,"HOUSTON, TX 77099 2013",04:03:00 08/09/26,Arrest,346.63(1)(am); 961.41(3g)(e); 961.573(1),Operating with Restricted Controlled Substance in Blood - RCS; Possession of THC (Tetrahydrocannabinols); Possession of Drug Paraphernalia,3

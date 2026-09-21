@@ -565,3 +565,50 @@ name_number,inmate_name,age,address,booking_datetime,booking_type,statutes,offen
 169216,"ODONNELL, JOHN RUSSELL",38,"DEFOREST, WI 53532",20:47:59 09/06/26,Arrest,941.23(2),Carrying a Concealed Weapon,1
 86348,"WEISENSEL, BRYAN PHILIP",34,"PARDEEVILLE, WI 53954",21:19:00 09/06/26,Arrest,946.49(1)(a); 968.075; 947.01(1),Misdemeanor Bail Jumping; Domestic - Modifier; Disorderly Conduct,3
 397318,"ZUNIGA FLORES, FRANCISCO",33,"PARDEEVILLE, WI 53954",22:58:00 09/06/26,Arrest,343.44(1)(b); 347.413(1); 346.63(1)(b),OAR - Operate Motor Vehicle While Revoked; Failure to Install Ignition Interlock Device / Tampering / Violate Order; Operating with Prohibited Alcohol Concentration - PAC,3
+397320,"KRUPELA, JARED ALLEN",29,"PHOENIX, AZ 85027",02:20:00 09/07/26,Arrest,346.63(1)(a); 946.42(3)(a); 946.41(1),Operating While Intoxicated - OWI; Escape; Obstructing or Resisting an Officer,3
+397329,"PAULSEN, JOHN FRANCIS II",42,"LAKE MILLS, WI 53551",02:47:00 09/07/26,Arrest,961.41(3g)(c); 946.49(2); 961.41(3g)(e); 343.44(1)(a); 961.573(1),Possession of Cocaine; Bail Jumping; Possession of THC (Tetrahydrocannabinols); Operate Motor Vehicle While Suspended- OAS - All Offenses; Possession of Drug Paraphernalia,5
+179699,"COLON SANCHEZ, RANDY ANTONIO",32,"PORTAGE, WI 53901",21:49:09 09/07/26,Arrest,946.49(1)(b),Felony Bail Jumping,1
+355130,"WOODS, CAMERON LAMONT",26,"PORTAGE, WI 53901",23:32:00 09/07/26,Arrest,940.60(1); 940.235(1); 947.01(1); 943.01(1); 940.44(2); 968.075; 941.30(1),Battery; Strangulation and Suffocation; Disorderly Conduct; Criminal Damage to Property; Intimidation of Victim; Domestic - Modifier; First Degree Recklessly Endangering Safety,7
+292051,"DESHONG, DAMIEN EUGENE",25,"WISCONSIN DELLS, WI 53965",12:50:49 09/08/26,Arrest,968.09; 346.67(1),Failure to Appear; Hit and Run - Attended Vehicle,2
+397370,"SOUNG, JOHN A",49,"CHIPPEWA FALLS, WI 54729",13:50:54 09/08/26,Out of County Hold,9999.99(99L),Other County Hold,1
+96962,"LESTER, TAMMY LEE",48,"MADISON, WI 53704",19:13:00 09/08/26,Serving Sentence,943.10(1m)(f),Burglary - Room,1
+397104,"ROLLINS, ANTHONY LYZELL",39,"CHICAGO, IL 60636",02:21:41 09/09/26,Arrest,961.41(3g)(am); 961.41(3g)(c); 961.573(1); 961.495; 346.63(1)(a),Possession of Narcotic Drugs; Possession of Cocaine; Possession of Drug Paraphernalia; Possession of a Controlled Substance On or Near Certain Places; Operating While Intoxicated - OWI,5
+35769,"VENDEN, JOSHUA STEPHEN",44,"COLUMBUS, WI 53925",03:27:48 09/09/26,Arrest,961.573(1); 961.41(3g)(g); 946.41(1),Possession of Drug Paraphernalia; Possession of Methamphetamine; Obstructing or Resisting an Officer,3
+381721,"UNDERWOOD, DANIEL LEE",41,"LA CROSSE, WI 54601",15:15:00 09/09/26,Writ from DOC / Other County,782.00,Writ,1
+397128,"QUELLA, CHRISTOPHER MARK II",38,"WISCONSIN DELLS, WI 53965",16:49:24 09/09/26,Arrest,947.01(1); 961.573(1); 961.41(3g)(e); 346.935(2); 947.013(1m),Disorderly Conduct; Possession of Drug Paraphernalia; Possession of THC (Tetrahydrocannabinols); Possess Open Intoxicants in Motor Vehicle; Harassment,5
+330533,"PARLICH, G RONALD ROBERT",22,"PORTAGE, WI 53901",17:10:00 09/09/26,Arrest,946.41(1); 946.47(1)(a); 961.41(3g)(e),"Obstructing or Resisting an Officer; Harboring/Aiding a Felon (Class A,B,C,D); Possession of THC (Tetrahydrocannabinols)",3
+378678,"NIXON, JASMINE",20,"PORTAGE, WI 53901",17:18:00 09/09/26,Arrest,961.41(3g)(e); 961.573(1),Possession of THC (Tetrahydrocannabinols); Possession of Drug Paraphernalia,2
+397417,"LEON, CALEB REED",18,"OREGON, WI 53575",17:25:00 09/09/26,Arrest,346.04(3); 941.30(2),Vehicle Operator Flee/Elude Officer; Second Degree Recklessly Endangering Safety,2
+172090,"STOWELL, ASHLEY MEGAN MARIE",33,"DALTON, WI 53926",19:00:00 09/09/26,Serving Sentence,346.63(1)(a); 346.63(1)(am),Operating While Intoxicated - OWI; Operating with Restricted Controlled Substance in Blood - RCS,2
+167126,"SIBLEY, MARCUS DEVON",36,"PORTAGE, WI 53901",03:00:00 09/10/26,Arrest,973.10,Probation/Parole Violation - VOP,1
+70018,"RINDE, CLINT LLOYD",59,"PORTAGE, WI 53901",09:37:40 09/10/26,Violation of Probation / Parole,973.10,Probation/Parole Violation - VOP,1
+367239,"YANKE, JENNIE MARIE",46,"WILMINGTON, IL 60481",14:33:45 09/10/26,Arrest Warrant,968.09; 943.20(1)(a),Failure to Appear; Theft - Movable Property,2
+7022,"VOIGTS, RYAN KENNETH",50,"NAMPA, ID 83687",19:45:00 09/10/26,Arrest Warrant,948.22(2),Failure to Support,1
+356463,"HOWARD, TAYVION KARMAR",20,"MADISON, WI 53713",20:29:00 09/10/26,Arrest Warrant,9999.99(99M),Municipal Ordinance/FTP,1
+265772,"SCHUETZ, GAGE CJ",20,"PORTAGE, WI 53901",00:12:00 09/11/26,Arrest Warrant,968.09,Failure to Appear,1
+173248,"PAYNE, DAKOTA LEE",31,"CASHTON, WI 54619",01:18:00 09/11/26,Arrest,961.41(3g)(e); 961.573(1),Possession of THC (Tetrahydrocannabinols); Possession of Drug Paraphernalia,2
+45032,"BELOW, BRITTANY JADE",42,"MADISON, WI 53704",01:58:00 09/11/26,Arrest,947.01(1); 940.60(1); 940.235(1); 968.075; 943.01(1),Disorderly Conduct; Battery; Strangulation and Suffocation; Domestic - Modifier; Criminal Damage to Property,5
+248847,"GEHRKE, JOSHUA JAMES",45,"BEAVER DAM, WI 53916",02:03:00 09/11/26,Arrest,346.63(1)(a),Operating While Intoxicated - OWI,1
+150049,"BAERWOLF, DUSTIN JAYMES",40,"ENDEAVOR, WI 53930",04:24:00 09/11/26,Arrest,968.075; 947.01(1),Domestic - Modifier; Disorderly Conduct,2
+16011,"BRISSETTE, BRENDA LEECATHERINE",66,"PORTAGE, WI 53901",10:54:01 09/11/26,Arrest,940.60(1); 947.01(1),Battery; Disorderly Conduct,2
+24563,"JOPKE, WILLIAM PAUL",61,"EDGERTON, WI 53534",12:22:59 09/11/26,"Arrest rpjlbsr.x3 09/14/26 Booking Summary Report, by Date and Time Page 10 of 16",347.413(1); 343.44(1)(b); 968.09,Failure to Install Ignition Interlock Device / Tampering / Violate Order; OAR - Operate Motor Vehicle While Revoked; Failure to Appear,3
+173376,"LEE, SHAYANNE ELIZABETH",30,"WISCONSIN DELLS, WI 53965",13:26:07 09/11/26,Violation of Probation / Parole,9999.99(99H); 973.10,ES SANCTIONS; Probation/Parole Violation - VOP,2
+397516,"LAPAN, LARRY JAMES",64,"MARSHFIELD, WI 54449",16:38:50 09/11/26,Violation of Probation / Parole,973.10,Probation/Parole Violation - VOP,1
+265958,"VANKOOTEN, CHRISTOPHER ALLEN",66,"POYNETTE, WI 53955",18:15:00 09/11/26,Violation of Probation / Parole,973.10,Probation/Parole Violation - VOP,1
+97433,"FRY, CODY LEE",30,"BARABOO, WI 53913",20:37:00 09/11/26,Violation of Probation / Parole,973.10,Probation/Parole Violation - VOP,1
+153089,"JOHNSON, MICHAEL ANDREW DAVID",20,"PARDEEVILLE, WI 53954",02:07:00 09/12/26,Arrest,346.63(1)(a); 961.41(3g)(e); 961.573(1),Operating While Intoxicated - OWI; Possession of THC (Tetrahydrocannabinols); Possession of Drug Paraphernalia,3
+392460,"HARRISON, WILLIE JAMES BILLY JR",27,"WISCONSIN DELLS, WI 53965",03:28:00 09/12/26,Arrest,947.01(1); 946.41(1); 946.49(1)(a),Disorderly Conduct; Obstructing or Resisting an Officer; Misdemeanor Bail Jumping,3
+397564,"OCAMPO-CHAVARRIA, JAMIE E",34,"MILWAUKEE, WI 53204",10:22:42 09/12/26,Arrest Warrant,9999.99(99K); 343.05(3)(a),Other County/Jurisdiction Warrant; Operating Without a License - OWL,2
+397595,"NEVE, MYKEL VINCENT",19,"MARSHFIELD, WI 54449",21:56:00 09/12/26,Arrest,9999.99(99K),Other County/Jurisdiction Warrant,1
+24057,"HAAG, STANLEY JOHN",47,"DEFOREST, WI 53532",22:46:00 09/12/26,Arrest,961.41(3g)(d); 961.41(3g)(e); 961.573(1),Possession of a Controlled Substance (Certain Hallucinogenic and; Possession of THC (Tetrahydrocannabinols); Possession of Drug Paraphernalia,3
+245163,"HAAG, ALEC STANLEY",25,"DEFOREST, WI 53532",23:25:00 09/12/26,Arrest,346.63(1)(am),Operating with Restricted Controlled Substance in Blood - RCS,1
+397609,"FRANCO, JUAN ALEXIS",24,"REEDSBURG, WI 53959",00:56:00 09/13/26,Arrest,946.49(1)(b),Felony Bail Jumping,1
+397617,"DIAZ FRAGA, JESUS JAIME",33,"CLYMAN, WI 53016",04:13:00 09/13/26,"Arrest rpjlbsr.x3 09/14/26 Booking Summary Report, by Date and Time Page 14 of 16",346.63(1)(a),Operating While Intoxicated - OWI,1
+41895,"DITTBERNER, BRANDON KENNITH",55,"PORTAGE, WI 53901",13:08:00 09/13/26,Arrest,947.01(1); 968.075; 946.49(1)(a),Disorderly Conduct; Domestic - Modifier; Misdemeanor Bail Jumping,3
+84347,"DITTBERNER, COLTIN COLE",21,"PORTAGE, WI 53901",13:21:00 09/13/26,Arrest,947.01(1); 968.075; 946.49(1)(a),Disorderly Conduct; Domestic - Modifier; Misdemeanor Bail Jumping,3
+397650,"POLLARD, RANDY JOSEPH",36,"PLAINFIELD, WI 54966",16:30:00 09/13/26,"Arrest rpjlbsr.x3 09/14/26 Booking Summary Report, by Date and Time Page 15 of 16",968.075; 943.01(1),Domestic - Modifier; Criminal Damage to Property,2
+397651,"LUCHT, ASHLEY MARIE",31,"PLOVER, WI 54467",17:20:00 09/13/26,Arrest,968.075; 940.60(1),Domestic - Modifier; Battery,2
+397653,"MAYS, DAVID R",32,"CHICAGO, IL 60610",18:40:19 09/13/26,Arrest,947.01(1),Disorderly Conduct,1
+292299,"GROH, BRADY NATHANIAL",19,"FALL RIVER, WI 53932",20:39:50 09/13/26,"Violation of Probation / Parole rpjlbsr.x3 09/14/26 Booking Summary Report, by Date and Time Page 16 of 16",973.10,Probation/Parole Violation - VOP,1
+397655,"CURTIS, ZACHARY THOMAS",30,"POYNETTE, WI 53955",21:03:00 09/13/26,Arrest,346.63(1)(a),Operating While Intoxicated - OWI,1
+386103,"LAPLANTE, BRYAN DANIEL",45,"CAMBRIA, WI 53923",22:54:00 09/13/26,Arrest,968.075; 947.01(1),Domestic - Modifier; Disorderly Conduct,2

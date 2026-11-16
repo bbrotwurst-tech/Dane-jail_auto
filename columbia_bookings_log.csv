@@ -810,3 +810,33 @@ name_number,inmate_name,age,address,booking_datetime,booking_type,statutes,offen
 370844,"SCHUESSLER, SAMUEL JOSEPH",34,"GREEN BAY, WI 54303",19:00:00 11/01/26,Serving Sentence,346.63(1)(am),Operating with Restricted Controlled Substance in Blood - RCS,1
 145731,"MRAZ, COLTON DANIEL",29,"PORTAGE, WI 53901",22:30:00 11/01/26,Arrest,346.67(1); 346.63(1)(a),Hit and Run - Attended Vehicle; Operating While Intoxicated - OWI,2
 399803,"HASSELL, CHANCE EDWARD",31,"SWEETWATER, TN 37874",23:38:00 11/01/26,Arrest,346.63(1)(a),Operating While Intoxicated - OWI,1
+399625,"COOPER, BILLIE FRANCIS",66,"PLOVER, WI 54467",09:17:46 11/02/26,Out of County Hold,9999.99(99K),Other County/Jurisdiction Warrant,1
+388748,"LLOYD, ISAAC SCOTT",30,"BLACK RIVER FAL, WI 54615",14:06:00 11/02/26,Arrest Warrant,968.09; 9999.99(99K),Failure to Appear; Other County/Jurisdiction Warrant,2
+399814,"DANIELSON, KENNETH LEE",36,"CABLE, WI 54821",15:41:20 11/02/26,"Out of County Hold rpjlbsr.x3 11/09/26 Booking Summary Report, by Date and Time Page 2 of 10",9999.99(99L),Other County Hold,1
+291797,"FOWLER, LAYTHON WAYNE",30,"BARABOO, WI 53913",19:00:00 11/02/26,Serving Sentence,940.60(1); 947.01(1),Battery; Disorderly Conduct,2
+399829,"COLBY, BROOKE ANGEL",33,"BARABOO, WI 53913",01:38:31 11/03/26,Arrest Warrant,9999.99(99K),Other County/Jurisdiction Warrant,1
+244716,"STAMPS, JERMAINE TYREL",39,"FITCHBURG, WI 53713",09:57:26 11/03/26,Out of County Hold,9999.99(99K),Other County/Jurisdiction Warrant,1
+273606,"WILLIAMSON, RICHARD GRADY",58,"APPLETON, WI 54911",14:00:00 11/03/26,Serving Sentence,346.63(1)(a),Operating While Intoxicated - OWI,1
+344694,"MONTGOMERY, WILLIAM EDWARD",53,"MILWAUKEE, WI 53204",15:00:49 11/03/26,Arrest Warrant,943.20(1)(a); 9999.99(99L),Theft - Movable Property; Other County Hold,2
+222249,"KOSTERMAN, NICHOLAS JOHN",34,"NEW HOLSTEIN, WI 53901",15:23:00 11/03/26,Writ from DOC / Other County,782.00,Writ,1
+399862,"GLAZAR, JOHN FRANK",40,"WATERTOWN, WI 53094",18:51:00 11/03/26,Arrest,346.63(1)(a); 940.61(2)(a),Operating While Intoxicated - OWI; Battery by Prisoners,2
+141680,"APPENFELDT, HEATHER MARIE",39,"POYNETTE, WI 53955",11:01:35 11/04/26,Arrest,961.41(3g)(am),Possession of Narcotic Drugs,1
+391982,"THIEL, ANNABELLA ROSE",23,"OSHKOSH, WI 54904",11:19:14 11/04/26,Arrest,943.38(1)(a); 943.20(1)(a),Forgery - Writings or Objects; Theft - Movable Property,2
+17251,"BLANCHARD, MATTHEW SEAN",62,"FRIENDSHIP, WI 53934",12:54:41 11/04/26,Arrest,782.00,Writ,1
+388721,"LOZANO, MARIA SOKORA",59,"MILWAUKEE, WI 53215",14:29:27 11/04/26,Arrest,302.095(2)(a),Deliver Illegal Articles to Inmate,1
+92656,"SHIER, NICHOLAS CARL",36,"PORTAGE, WI 53901",14:33:27 11/04/26,Writ from DOC / Other County,782.00,Writ,1
+116308,"BAHR, DEVIN ALAN",33,"WAUPUN, WI 53963",17:10:26 11/04/26,"Revocation Order and Warrant rpjlbsr.x3 11/09/26 Booking Summary Report, by Date and Time Page 6 of 10",973.10,Probation/Parole Violation - VOP,1
+267755,"CLARK, RICHARD ALVIN JR",40,"JUNEAU, WI 53039",17:14:43 11/04/26,Revocation Order and Warrant,973.10,Probation/Parole Violation - VOP,1
+125543,"COLE, JOSHUA EDWARD",43,"PORTAGE, WI 53901",18:06:00 11/05/26,Arrest Warrant,9999.99(99K),Other County/Jurisdiction Warrant,1
+342452,"BENISH, THOMAS MICHAEL",37,"LODI, WI 53555",20:58:00 11/05/26,Arrest,973.10; 961.41(3g)(c); 946.49(1)(a),Probation/Parole Violation - VOP; Possession of Cocaine; Misdemeanor Bail Jumping,3
+301630,"CHACON, BRANDON ALBERTO",33,"LA CROSSE, WI 54601",11:35:00 11/06/26,Arrest Warrant,968.09,Failure to Appear,1
+378562,"OCAMPO, JOSEPH ANTHONY",28,"FITCHBURG, WI 53719",19:00:00 11/06/26,Serving Sentence,346.63(1)(a),Operating While Intoxicated - OWI,1
+363088,"GAUSMANN, CANDICE JAZLYN",30,"PORTAGE, WI 53901",20:47:17 11/06/26,Serving Sentence,946.41(1),Obstructing or Resisting an Officer,1
+122451,"KNORR, CHAD BRADLEY",51,"PORTAGE, WI 53901",22:08:00 11/06/26,Arrest,946.49(1)(b); 946.49(1)(a),Felony Bail Jumping; Misdemeanor Bail Jumping,2
+399999,"VOGELMAN, MITCHELL BRIAN",30,"DELAVAN, WI 53115",01:26:00 11/07/26,Violation of Probation / Parole,973.10,Probation/Parole Violation - VOP,1
+120548,"GIESE, JEREMY ALAN",46,"PARDEEVILLE, WI 53954",02:26:00 11/07/26,Arrest,947.019(1); 947.01(1); 946.49(1)(b); 940.204(3),Terrorist Threats; Disorderly Conduct; Felony Bail Jumping; Battery or Threat to Health Care Provider,4
+224253,"PADILLA DUARTE, LUIS GUSTAVO",31,"SHEBOYGAN, WI 53081",03:17:00 11/07/26,Violation of Probation / Parole,973.10,Probation/Parole Violation - VOP,1
+383605,"MCCULLOUGH, AUSTIN S",33,"PORTAGE, WI 53901",18:36:00 11/07/26,Arrest,941.30(2); 947.01(1); 943.01(1); 946.49(1)(b); 946.49(1)(a); 968.075,Second Degree Recklessly Endangering Safety; Disorderly Conduct; Criminal Damage to Property; Felony Bail Jumping; Misdemeanor Bail Jumping; Domestic - Modifier,6
+314477,"THOMPSON, OLIVIA KRISTINE",21,"PORTAGE, WI 53901",02:50:00 11/08/26,Arrest,346.63(1)(a),Operating While Intoxicated - OWI,1
+400070,"CUNNIEN, DAVID LARRY",55,"OAKDALE, MN 55128",21:09:00 11/08/26,Arrest,346.63(1)(a),Operating While Intoxicated - OWI,1
+167126,"SIBLEY, MARCUS DEVON",36,"PORTAGE, WI 53901",22:56:56 11/08/26,Arrest,946.49(1)(a); 973.10,Misdemeanor Bail Jumping; Probation/Parole Violation - VOP,2
